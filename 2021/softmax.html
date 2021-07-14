@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang=" en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>机器学习笔记 - Softmax | Tianxin’s Blog</title>
+<meta name="generator" content="Jekyll v4.2.0">
+<meta property="og:title" content="机器学习笔记 - Softmax">
+<meta name="author" content="Tianxin Xie">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Softmax 常用于多分类的情况，它将一个 N 维的由任意实数组成的向量作为输入，然后输出一个 N 维的概率向量，且其所有分量之和为 1。我们先来看一个有 5 类（类别编号为 0, 1, 2, 3, 4）输出的多分类器：">
+<meta property="og:description" content="Softmax 常用于多分类的情况，它将一个 N 维的由任意实数组成的向量作为输入，然后输出一个 N 维的概率向量，且其所有分量之和为 1。我们先来看一个有 5 类（类别编号为 0, 1, 2, 3, 4）输出的多分类器：">
+<link rel="canonical" href="/2021/softmax">
+<meta property="og:url" content="/2021/softmax">
+<meta property="og:site_name" content="Tianxin’s Blog">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2021-06-17T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="机器学习笔记 - Softmax">
+<script type="application/ld+json">
+{"description":"Softmax 常用于多分类的情况，它将一个 N 维的由任意实数组成的向量作为输入，然后输出一个 N 维的概率向量，且其所有分量之和为 1。我们先来看一个有 5 类（类别编号为 0, 1, 2, 3, 4）输出的多分类器：","headline":"机器学习笔记 - Softmax","dateModified":"2021-06-17T00:00:00+08:00","datePublished":"2021-06-17T00:00:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"/2021/softmax"},"url":"/2021/softmax","author":{"@type":"Person","name":"Tianxin Xie"},"@type":"BlogPosting","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="shortcut icon" href="/assets/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="Tianxin's Blog">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script>MathJax={"tex":{"inlineMath":[["$","$"],["\\(","\\)"]],"displayMath":[["$$","$$"],["\\[","\\]"]]},"svg":{"fontCache":"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="Tianxin's Blog" src="/assets/images/favicon.png" onerror="this.style.display='none'">
+</a></span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+<span class="page-link">
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<span class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</span>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: '',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</span>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  (function() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  })();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<!--<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+-->
+
+  <main class="page-content" aria-label="Content">
+    <div class="wrapper">
+      <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">机器学习笔记 - Softmax</h1>
+  <h2 class="post-subtitle"></h2>
+
+  <p class="post-meta">
+    <time class="dt-published" datetime="2021-06-17T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Jun 17, 2021
+    </time>
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 11 mins</span>
+  </p>
+<div class="post-tags"><a class="post-tag" href="/tags.html#MachineLearning">#MachineLearning</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p>Softmax 常用于多分类的情况，它将一个 N 维的由任意实数组成的向量作为输入，然后输出一个 N 维的概率向量，且其所有分量之和为 1。我们先来看一个有 5 类（类别编号为 0, 1, 2, 3, 4）输出的多分类器：</p>
+
+<p><img src="/assets/images/post_imgs/MLNotes_Softmax.assets/softmax01.png" alt="softmax01" title="5个类别的Softmax分类器"></p>
+
+<p>如图所示，$X_i$ 表示数据集中第 $i$ 个样本，有 N 个特征；$W$ 表示通过学习得到的参数矩阵（N 行 5 列）；$S_i$ 表示经过计算后，输入样本在各个类别上的得分。接着将得分经过”Softmax”处理后，得到样本属于各个类别的概率向量 $P_i$，最后选择概率最高的类别作为输出标签。通常情况下，Softmax 分类器放置在整个模型的结尾处，也就是说上图中 Softmax 的输入 $X_i$ 也可以是前置模块（例如神经网络)的输出。</p>
+
+<h2 id="1-预测流程">1 预测流程</h2>
+
+<p>上图中绿色部分表示的得分是输入 $X_i$ 和 $W$ 的线性乘积：</p>
+
+\[S_i = f(X_i, W) = X_i * W\]
+
+<p>接着，用 $S_i$ 的每个分量 $S_{ik}$ 作为指数，做如下计算就得到了概率向量 $P_i$：</p>
+
+\[P_i = [P_{i,0} = \frac{e^{S_{i,0}}}{\sum_{k=0}^{4}e^{S_{i,k}}}, P_{i,1} = \frac{e^{S_{i,1}}}{\sum_{k=0}^{4}e^{S_{i,k}}}, ..., P_{i,4} = \frac{e^{S_{i,4}}}{\sum_{k=0}^{4}e^{S_{i,k}}}]\]
+
+<p>下面用 numpy 简单模拟一下这个计算过程，首先生成一个随机的 $X_i$ 和 $W$：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="n">array</span><span class="p">([[</span> <span class="mf">0.79133497</span><span class="p">,</span>  <span class="mf">1.25991782</span><span class="p">,</span>  <span class="mf">2.05647627</span><span class="p">,</span>  <span class="mf">0.57785825</span><span class="p">,</span>  <span class="mf">0.09202159</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.40157209</span><span class="p">,</span>  <span class="mf">0.19652735</span><span class="p">,</span>  <span class="mf">0.04938573</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.10461471</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.74042572</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">w</span>
+<span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.65392227</span><span class="p">,</span>  <span class="mf">1.89659498</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.11629679</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.93221547</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.77651529</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">1.07090883</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.15001729</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1281176</span> <span class="p">,</span> <span class="o">-</span><span class="mf">2.35069474</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.61484098</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">1.01960799</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.97765036</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.95673941</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1911482</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.51133051</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.52650448</span><span class="p">,</span>  <span class="mf">1.01087258</span><span class="p">,</span>  <span class="mf">0.22877655</span><span class="p">,</span>  <span class="mf">0.67891746</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.64167637</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.22563436</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.17559678</span><span class="p">,</span>  <span class="mf">0.41271418</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.7964071</span> <span class="p">,</span>  <span class="mf">1.0986726</span> <span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.20037395</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.68407372</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.25964979</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.73397112</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.09695987</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.02523734</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.70474257</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.76772239</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.19074719</span><span class="p">,</span>  <span class="mf">0.19775151</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.28158624</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.21311108</span><span class="p">,</span>  <span class="mf">0.23231037</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.38678946</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.91647861</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">2.15435732</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.67917135</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.07906748</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.81204621</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.42509496</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.46912629</span><span class="p">,</span>  <span class="mf">0.54266569</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0158846</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.53389348</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.7792223</span> <span class="p">]])</span>
+</code></pre></div></div>
+
+<p>计算该样本在各类别上的得分：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="c1"># 计算样本在各类别的得分
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">s</span>
+<span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">4.13973271</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.64507675</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.55969798</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.8374945</span> <span class="p">,</span> <span class="o">-</span><span class="mf">3.38799113</span><span class="p">]])</span>
+</code></pre></div></div>
+
+<p>求概率向量 $P_i$：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="c1"># 使用得分s求指数
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">e</span>
+<span class="n">array</span><span class="p">([[</span><span class="mf">0.01592711</span><span class="p">,</span> <span class="mf">0.19299775</span><span class="p">,</span> <span class="mf">0.21019955</span><span class="p">,</span> <span class="mf">0.05857224</span><span class="p">,</span> <span class="mf">0.03377646</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">e</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="c1"># 求各个分类概率
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">p</span>
+<span class="n">array</span><span class="p">([[</span><span class="mf">0.03113968</span><span class="p">,</span> <span class="mf">0.37733705</span><span class="p">,</span> <span class="mf">0.41096892</span><span class="p">,</span> <span class="mf">0.11451675</span><span class="p">,</span> <span class="mf">0.06603761</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="c1"># 概率之和应该为1
+</span><span class="mf">1.0</span>
+</code></pre></div></div>
+
+<p>使用 <a href="https://numpy.org/doc/stable/reference/generated/numpy.argmax.html">numpy.argmax()</a> 函数可以获得最大值的下标：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="c1"># 下标从0开始
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">y</span>
+<span class="mi">2</span>
+</code></pre></div></div>
+
+<p>获得的下标即是 Softmax 给出的关于输入 $X_i$ 的类别标签。</p>
+
+<h2 id="2-loss-函数">2 Loss 函数</h2>
+
+<p>Loss 函数衡量了模型在数据集上的表现，Loss 越低，在训练集上的效果越好。在 Softmax 中，样本的标签通常用 one-hot 表示，若训练样本 $X_i$ 的类别编号为 2，则其标签 $y_i = [0, 0, 1, 0, 0]$ 。Softmax 使用<a href="https://machinelearningmastery.com/cross-entropy-for-machine-learning/">交叉熵</a>作为 Loss 损失，对样本 $X_i$，其损失 $L_i$ 如下：</p>
+
+\[L_i = -log(\frac{e^{S_{i,2}}}{\sum_{k=0}^{4}{e^{S_{i,k}}}})\]
+
+<p>上式中的 $S_{i2}$ 表示训练样本在第 2 类上对应的得分。可以按照 3.1 节中的形式表示为：</p>
+
+\[L_i = -log(P_{i,2})\]
+
+<p>我们可以继续用 3.1 节中的例子来说明：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">p</span>
+<span class="n">array</span><span class="p">([[</span><span class="mf">0.03113968</span><span class="p">,</span> <span class="mf">0.37733705</span><span class="p">,</span> <span class="mf">0.41096892</span><span class="p">,</span> <span class="mf">0.11451675</span><span class="p">,</span> <span class="mf">0.06603761</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">yi</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="c1"># 样本标签
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">Li</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">*</span><span class="n">yi</span><span class="p">))</span> <span class="c1"># 计算Li，注意p*yi是元素对应相乘
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">Li</span>
+<span class="mf">0.8892376972266337</span>
+</code></pre></div></div>
+
+<p>这里需要注意的是，对于两个分布 $p$ 和 $q$，它们的交叉熵的定义如下：</p>
+
+\[xent(p,q)=-\sum_{k}{p(k)log(q(k))}\]
+
+<p>Softmax 输出的概率我们可以当做一个分布，例如样本 $X_i$ 对应的输出 $p_i = [0.1, 0.3, 0.2, 0.15, 0.25]$，其标签为 $y_i = [0, 0, 1, 0, 0]$，那么它们的交叉熵为：</p>
+
+\[\begin{align}
+xent(p_i, y_i)
+&amp;= -(0*log(0.1)+0*log(0.3)+1*log(0.2)+0*log(0.15)+0*log(0.25)) \nonumber \\
+&amp;= -1*log(0.2) \nonumber \\
+&amp;= -log(0.2) \nonumber \\
+&amp;= -log(p_{i2}) \nonumber \\
+&amp;= 1.61 \nonumber
+\end{align}\]
+
+<p>因为标签中只有一个 1，其他全是 0，所以单个样本 Softmax 的 Loss 可以简写成：</p>
+
+\[L_i = -log(\frac{e^{S_{i,t}}}{\sum_{k}{e^{S_{i,k}}}})\]
+
+<p>$S_{it}$ (t for target)表示样本类别标签对应的得分。</p>
+
+<p>上例中 $S_{it}=0.2$， Loss 为 1.61。若 $p_i = [0.1, 0.05, 0.7, 0.1, 0.05]$，即 $S_{it}=0.7$，则 $L_i = -log(0.7) = 0.36$。可见，模型输出的概率和样本类别标签越接近，Loss 越小，说明模型越准确，这也是为什么使用交叉熵作为 Loss 的原因。</p>
+
+<p>整个训练集的 Loss 为各个样本 Loss 的平均值，通常还会加上 L2 惩罚项，系数 $\frac{1}{2}$ 是为了求导消掉指数：</p>
+
+\[L = \frac{1}{N} \sum\_{i=1}^{N} L\_i + \frac{\lambda}{2}\||W\||^2\]
+
+<p>我们一般称其为 Softmax Loss。</p>
+
+<h2 id="3-梯度计算">3 梯度计算</h2>
+
+<p>先回顾一下 Softmax 的流程：</p>
+
+<pre><code class="language-mermaid">graph LR
+    A[Xi * W] --&gt; Si --&gt; Softmax运算 --&gt; Pi --&gt; B[Li=logPi]
+</code></pre>
+
+<p>符号说明：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>符号</th>
+      <th>含义</th>
+      <th>维度</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>$X_i$</td>
+      <td>一个输入样本向量</td>
+      <td>1 x M</td>
+    </tr>
+    <tr>
+      <td>$W$</td>
+      <td>参数矩阵</td>
+      <td>M x C</td>
+    </tr>
+    <tr>
+      <td>$S_i$</td>
+      <td>每个类别上的得分组成的向量</td>
+      <td>1 x C</td>
+    </tr>
+    <tr>
+      <td>$P_i$</td>
+      <td>每个类别上的概率组成的向量</td>
+      <td>1 x C</td>
+    </tr>
+    <tr>
+      <td>$y_i$</td>
+      <td>样本标签 one-hot 向量</td>
+      <td>1 x C</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>其中 $M$ 是输入的特征数量，$C$ 是输出类别的数量。我们的目的，是要求 Loss 函数关于参数矩阵 $W$ 的偏导数，这个偏导数将用于在梯度下降算法中更新 $W$ 的值。根据链式法则有：</p>
+
+\[\frac{\partial{L_i}}{\partial{W}}
+= \frac{\partial{L_i}}{\partial{Si}} \times \frac{\partial{S_i}}{\partial{W}}\]
+
+<p>第一项即 Softmax 的偏导数，第二项则是一个矩阵求导，下面分别介绍。</p>
+
+<h3 id="31-softmax-loss-导数">3.1 Softmax Loss 导数</h3>
+
+<p>首先来计算样本 $X_i$ 的 Loss 关于 $S_i$ 的梯度 $\frac{\partial{L_i}}{\partial{S_i}}$，这是求标量关于向量的偏导数。我们知道：</p>
+
+\[L_i = -log(\frac{e^{S_{i,t}}}{\sum_{k}{e^{S_{i,k}}}})\]
+
+<p>其中类别 $t$ 是该样本的标签。把上式中的分式改写为减式：</p>
+
+\[L_i = -\left[log(e^{S_{i,t}}） - log({\sum_{k}{e^{S_{i,k}}}})\right]\]
+
+<p>化简并展开求和符号：</p>
+
+\[L_i = -S_{it} + log(e^{S_{i,0}} + e^{S_{i,0}} + ... + e^{S_{i,C-1}})\]
+
+<p>$log$ 函数求导很简单，如对分量 $e^{S_{ij}}$ 求偏导：</p>
+
+\[\begin{align}
+\frac{\partial{log({\sum_{k}{e^{S_{i,k}}}})}}{\partial{e^{S_{i,j}}}}
+&amp;= \frac{e^{S_{i,j}}}{e^{S_{i,0}} + e^{S_{i,0}} + ... + e^{S_{i,C-1}}} \\
+&amp;= \frac{e^{S_{i,j}}}{\sum_{k}{e^{S_{i,k}}}} \\
+&amp;= P_{i,j}
+\end{align}\]
+
+<p>所以后面那一项求导其实等于 Softmax 输出的概率值，那么标量 $L_i$ 对某个分量(标量) $S_{i,k}$ 的偏导数为：</p>
+
+\[\frac{\partial{L_i}}{\partial{S_{i,k}}} =
+\begin{cases}
+    -1 + P_{i,k}, &amp;\text{if $k = t$} \\
+    P_{i,k}, &amp;\text{if $k \neq t$}
+\end{cases}\]
+
+<p>即该样本的 Loss 对标签对应的分量求偏导时会多减去一个 $-1$。所以，我们计算 Softmax 的 Loss 关于 $S_i$ 的导数的时候，直接使用概率向量 $P_i$ 减去标签向量 $y_i$ 即可：</p>
+
+\[\frac{\partial{L_i}}{\partial{S_i}} = P_i - y_i\]
+
+<p>因此，对于有 N 个样本的训练集 $X$，其规模为 N x M，标签用 $y$ 表示，是一个由 one-hot 行向量组成的 N x C 的矩阵。我们可以一次性求出一个 Loss 关于 S 的偏导数矩阵（规模为 N x C ）：</p>
+
+\[\begin{align}
+    \frac{\partial{L}}{\partial{S}} &amp;= P - y \\
+    &amp;=
+    \begin{bmatrix}
+    P_{0,0} &amp; P_{0,1} &amp; ... &amp; P_{0,C-1} \\
+    ... &amp; ... &amp; ... &amp; ... \\
+    P_{N-1,0} &amp; P_{N-1,1} &amp; ... &amp; P_{N-1,C-1}
+    \end{bmatrix}
+    -
+    \begin{bmatrix}
+    y_{0,0} &amp; y_{0,1} &amp; ... &amp; y_{0,C-1} \\
+    ... &amp; ... &amp; ... &amp; ... \\
+    y_{N-1,0} &amp; y_{N-1,1} &amp; ... &amp; y_{N-1,C-1}
+    \end{bmatrix}
+\end{align}\]
+
+<p>在编写代码时，我们可以直接按照上面这个式子批量求出所有的 Softmax Loss 偏导数。</p>
+
+<h3 id="32-矩阵导数">3.2 矩阵导数</h3>
+
+<p>我们已经完成了链式求导的第一部分，下面来计算第二部分，即 $\frac{\partial{S_i}}{\partial{W}}$。我们先从单个样本的得分 $S_i$ 开始，后面再推导出向量化的计算公式。我们知道 $S_i = X_iW$，即：</p>
+
+\[[S_{i,0},S_{i,1},...,S_{i,C-1}] = [X_{i,0},X_{i,1},...,X_{i,M-1}]
+\begin{bmatrix}
+W_{0,0} &amp; W_{0,1} &amp; ... &amp; W_{0,C-1} \\
+W_{1,0} &amp; W_{1,1} &amp; ... &amp; W_{1,C-1} \\
+... &amp; ... &amp; ... &amp; ... \\
+W_{M-1,0} &amp; W_{M-1,1} &amp; ... &amp; W_{M-1,C-1} \\
+\end{bmatrix}\]
+
+<p>可见 $\frac{\partial{S_i}}{\partial{W}}$ 是向量对矩阵的偏导数，直接写出答案可能比较困难，我们可以先计算最简单的标量对标量的偏导数，最后把它们组合起来。例如求 $S_{i,0}$ 关于 $W_{0,0}$ 的偏导数，我们知道：</p>
+
+\[S_{i,0} = X_{i,0}W_{0,0} + X_{i,1}W_{1,0} + ... + X_{i,M-1}W_{M-1,0}\]
+
+<p>可见 $S_i$ 的第 $k$ 个分量关于 $W$ 的偏导数只和 $W$ 的第 $k$  列有关，则 ：</p>
+
+\[\frac{\partial{S_{i,0}}}{\partial{W_{0,0}}} = X_{i,0} \\
+\frac{\partial{S_{i,0}}}{\partial{W_{1,0}}} = X_{i,1} \\
+...\\
+\frac{\partial{S_{i,0}}}{\partial{W_{M-1,0}}} = X_{i,M-1}\]
+
+<p>那么：</p>
+
+\[\frac{\partial{S_{i,0}}}{\partial{W_{j,0}}} = {X_i}^T, \space j\in[0,M-1]\]
+
+<p>同理，$S_{i,1},…,S_{i,C-1}$ 对 $W$ 的偏导数均为 ${X_i}^T$，那么可以得到：</p>
+
+\[\frac{\partial{S_i}}{\partial{W}} = \left[{X_i}^T, ..., {X_i}^T\right]\]
+
+<p>共有 M 行 C 列。注意这只是一个样本的得分 $S_i$ 关于参数矩阵 $W$ 的偏导数。</p>
+
+<h3 id="33-反向传播">3.3 反向传播</h3>
+
+<p>反向传播的目标是求 $\frac{\partial{L}}{\partial{W}}$ ，然后用它对参数 $W$ 进行更新(梯度下降)。对于单个样本有：</p>
+
+\[\begin{align}
+\frac{\partial{L_i}}{\partial{W}}
+&amp;= \frac{\partial{L_i}}{\partial{Si}} \times \frac{\partial{S_i}}{\partial{W}} \\
+&amp;= (P_i - y_i) \times \left[{X_i}^T, ..., {X_i}^T\right]
+\end{align}\]
+
+<p>$P_i - y_i$ 的大小为 1 x C，$\left[{X_i}^T, …, {X_i}^T\right]$ 的大小为 M x C，元素对应相乘并进行行扩展(row broadcasting)。对 Loss 函数求关于 $W$ 的偏导有：</p>
+
+\[\frac{\partial{L}}{\partial{W}} =
+\frac{1}{N}\sum_{i=1}^{N}\frac{\partial{L_i}}{\partial{W}}
++ \lambda W\]
+
+<p>在反向传播过程中，求和项可以写为矩阵乘法的形式：</p>
+
+\[\begin{align}
+\sum_{i=1}^{N}\frac{\partial{L_i}}{\partial{W}}
+&amp;= X^T\frac{\partial{L}}{\partial{S}} \\
+&amp;= X^T(P-y)
+\end{align}\]
+
+<p>如果比较难理解，可以将这个矩阵乘法展开（为了方便，下标从 1 开始），我们记 $D = P-y$（Softmax 传来的梯度矩阵）：</p>
+
+\[\begin{align}
+\sum_{i=1}^{N}\frac{\partial{L_i}}{\partial{W}}
+&amp;= X^TD \\
+&amp;=
+\begin{bmatrix}
+X_{11} &amp; X_{21} &amp; ... &amp; X_{N1} \\
+X_{12} &amp; X_{22} &amp; ... &amp; X_{N2} \\
+... &amp; ... &amp; ... &amp; ... \\
+X_{1M} &amp; X_{2M} &amp; ... &amp; X_{NM} \\
+\end{bmatrix}
+\begin{bmatrix}
+D_{11} &amp; D_{12} &amp; ... &amp; D_{1C} \\
+D_{21} &amp; D_{22} &amp; ... &amp; D_{2C} \\
+... &amp; ... &amp; ... &amp; ... \\
+D_{N1} &amp; D_{N2} &amp; ... &amp; D_{NC} \\
+\end{bmatrix} \\
+&amp;=
+\begin{bmatrix}
+dW_{11} &amp; dW_{12} &amp; ... &amp; dW_{1C} \\
+dW_{21} &amp; dW_{22} &amp; ... &amp; dW_{2C} \\
+... &amp; ... &amp; ... &amp; ... \\
+dW_{M1} &amp; dW_{M2} &amp; ... &amp; dW_{MC} \\
+\end{bmatrix}
+\end{align}\]
+
+<p>以 $dW_{11}$ 为例展开：</p>
+
+\[dW_{11} = X_{11}D_{11} + X_{21}D_{21} + ... + X_{N1}D_{N1}\]
+
+<p>即 $dW_{11}$ 是每个样本的第一个分量和对应上游偏导数的乘积之和，即在每个样本上应用链式法则再求和。</p>
+
+<h2 id="4-示例代码">4 示例代码</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">softmax_loss</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">reg</span><span class="p">):</span>
+    <span class="s">"""
+    Softmax loss function
+
+    Inputs have dimension D, there are C classes, and we operate on minibatches
+    of N examples.
+
+    Inputs:
+    - W: A numpy array of shape (D, C) containing weights.
+    - X: A numpy array of shape (N, D) containing a minibatch of data.
+    - y: A numpy array of shape (N,) containing training labels; y[i] = c means
+      that X[i] has label c, where 0 &lt;= c &lt; C.
+    - reg: (float) regularization strength
+
+    Returns a tuple of:
+    - loss as single float
+    - gradient with respect to weights W; an array of same shape as W
+    """</span>
+    <span class="c1"># Initialize the loss and gradient to zero.
+</span>    <span class="n">loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">dW</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+
+    <span class="c1"># calculate Loss
+</span>    <span class="n">num_train</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">-=</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">).</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_train</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># aviod numeric instability
+</span>    <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+    <span class="n">row_sum</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">).</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_train</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">/=</span> <span class="n">row_sum</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="n">num_train</span><span class="p">),</span> <span class="n">y</span><span class="p">]))</span> <span class="o">/</span> <span class="n">num_train</span>
+    
+    <span class="c1"># calculate dL/dW
+</span>    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="c1"># store labels as one-hot vectors
+</span>    <span class="n">labels</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="n">num_train</span><span class="p">),</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">-</span> <span class="n">labels</span> <span class="c1"># shape: DxC
+</span>    <span class="n">dW</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">T</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span> <span class="c1"># shape: DxN * NXC = D*C
+</span>    <span class="n">dW</span> <span class="o">/=</span> <span class="n">num_train</span>
+    <span class="n">dW</span> <span class="o">+=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">reg</span> <span class="o">*</span> <span class="n">W</span> <span class="c1"># regularization
+</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">dW</span>
+</code></pre></div></div>
+
+<h2 id="5-参考文章">5 参考文章</h2>
+
+<ol>
+  <li><a href="https://cs231n.github.io/linear-classify/">CS231n Convolutional Neural Networks for Visual Recognition</a></li>
+  <li><a href="https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/">The Softmax function and its derivative</a></li>
+  <li><a href="https://machinelearningmastery.com/cross-entropy-for-machine-learning/">A Gentle Introduction to Cross-Entropy for Machine Learning</a></li>
+</ol>
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<span></span><a class="next" href="/2021/activations" title="机器学习笔记 - 激活函数总结">机器学习笔记 - 激活函数总结</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li><a class="post-link" href="/2021/activations" title="机器学习笔记 - 激活函数总结">机器学习笔记 - 激活函数总结</a></li>
+<li><a class="post-link" href="/2021/softmax" title="机器学习笔记 - 激活函数总结">机器学习笔记 - Softmax</a></li>
+<li><a class="post-link" href="/2021/optimization" title="机器学习笔记 - 激活函数总结">机器学习笔记 - 梯度下降优化方法总结</a></li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+    </div>
+  </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+      <div>Copyright © 2021 @Tianxin Xie</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="http://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+    </div>
+  </div>
+</footer>
+</body>
+
+</html>

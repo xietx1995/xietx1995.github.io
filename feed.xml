@@ -1,0 +1,996 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2021-07-14T21:55:41+08:00</updated><id>/feed.xml</id><title type="html">Tianxin’s Blog</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>Tianxin Xie</name></author><entry><title type="html">机器学习笔记 - 梯度下降优化方法总结</title><link href="/2021/optimization" rel="alternate" type="text/html" title="机器学习笔记 - 梯度下降优化方法总结" /><published>2021-07-04T00:00:00+08:00</published><updated>2021-07-04T00:00:00+08:00</updated><id>/2021/MLNotes_Optimization</id><content type="html" xml:base="/2021/optimization">&lt;p&gt;在机器学习实践中，我们会用许多手段来提升梯度下降算法的性能。本文主要参考一篇 &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/&quot;&gt;review&lt;/a&gt;，总结了在模型训练过程中常用的优化方法。本文的主要内容翻译自该篇 &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/&quot;&gt;review&lt;/a&gt;，做了增删改，并加上了部分自己的理解，以及额外的图示、视频和阅读材料。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;This blog post aims at providing you with intuitions towards the behaviour of different algorithms for optimizing gradient descent that will help you put them to use. We are first going to look at the different variants of gradient descent. We will then briefly summarize challenges during training. Subsequently, we will introduce the most common optimization algorithms by showing their motivation to resolve these challenges and how this leads to the derivation of their update rules. We will also take a short look at algorithms and architectures to optimize gradient descent in a parallel and distributed setting. Finally, we will consider additional strategies that are helpful for optimizing gradient descent.&lt;/p&gt;
+
+  &lt;p&gt;​                                                                                              –  “An overview of gradient descent optimization algorithms”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;1-梯度下降的变种&quot;&gt;1 梯度下降的变种&lt;/h2&gt;
+
+&lt;p&gt;这里介绍三种梯度下降的方法：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Batch Gradient Descent&lt;/li&gt;
+  &lt;li&gt;Stochastic Gradient Descent&lt;/li&gt;
+  &lt;li&gt;Mini-batch gradient descent&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这三种梯度下降方法的唯一区别就是每个 step 使用的数据量不同。&lt;/p&gt;
+
+&lt;h3 id=&quot;11-batch-gradient-descent&quot;&gt;1.1 Batch Gradient Descent&lt;/h3&gt;
+
+&lt;p&gt;这是最原始的梯度下降方法，翻译过来就是”批量梯度下降“，每个 step 使用整个训练集。&lt;/p&gt;
+
+\[\theta = \theta - \eta\cdot\triangledown_{\theta} J(\theta)\]
+
+&lt;p&gt;这个方法有三个问题：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;每个 step 都需要对整个训练集计算梯度，速度很慢；&lt;/li&gt;
+  &lt;li&gt;现在的数据集都较大，内存装不下整个训练集；&lt;/li&gt;
+  &lt;li&gt;不能进行 online training，例如已经部署好的一个模型，不能用新样本调整模型。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Batch Gradient Descent 的代码形式通常如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nb_epochs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;params_grad&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;evaluate_gradient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loss_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;learning_rate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params_grad&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;首先计算参数关于整个数据集的梯度，然后再用梯度乘以学习率来更新模型参数。如果 loss 函数是凸面，批量梯度下降能保证找到全局最优的参数，否则找到的可能是局部最优值。&lt;/p&gt;
+
+&lt;h3 id=&quot;12-stochastic-gradient-descent&quot;&gt;1.2 Stochastic Gradient Descent&lt;/h3&gt;
+
+&lt;p&gt;SGD 也称为随机梯度下降，和 BGD 是两个极端，BGD 一个 step 使用整个训练集，SGD 一次只用一个训练样本 $(x^{(i)}, y^{(i)})$ ：&lt;/p&gt;
+
+\[\theta = \theta - \eta \cdot \nabla_\theta J( \theta; x^{(i)}; y^{(i)})\]
+
+&lt;p&gt;SGD有两个好处：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;速度快，每次只用一个样本；&lt;/li&gt;
+  &lt;li&gt;可以进行 online training。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;SGD 也有一个比较大的缺点，就是在训练过程中，loss 函数的波动很大，导致较高的 variance：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Optimization.assets/sgd_fluctuation.png&quot; alt=&quot;sgd_fluctuation&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;很容易就能想象，SGD 的这种波动使得模型容易越过最优点。但是实验表明，如果在梯度下降的过程中逐渐减小学习率，最终几乎和 BGD 一样能够到达最优点 (convex loss) 或者局部最优点 (non-convex loss)。伪代码如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nb_epochs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shuffle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;example&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;params_grad&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;evaluate_gradient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loss_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;example&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;learning_rate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params_grad&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;每个 epoch 都对数据集进行了 &lt;a href=&quot;https://stats.stackexchange.com/a/311318&quot;&gt;shuffle&lt;/a&gt;，然后每次使用一个样本更新参数。&lt;/p&gt;
+
+&lt;h3 id=&quot;13-mini-batch-gradient-descent&quot;&gt;1.3 Mini-batch Gradient Descent&lt;/h3&gt;
+
+&lt;p&gt;中文称其为小批量梯度下降，我们就简称 MBGD 吧。&lt;/p&gt;
+
+\[\theta = \theta - \eta \cdot \nabla_\theta J( \theta; x^{(i:i+n)}; y^{(i:i+n)})\]
+
+&lt;p&gt;MBGD 每个 step 只使用训练集的一小部分，根据数据集大小、设备性能、内存、显存容量等，一般取 32， 64， 128， 256， 512 等。它综合了 BGD 和 SGD 的优点：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;loss 和参数不会有很大的波动；&lt;/li&gt;
+  &lt;li&gt;训练速度快 (目前的训练框架能高效地计算梯度)；&lt;/li&gt;
+  &lt;li&gt;可以 online training (只需集齐一个batch就可以)。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;MBGD 也能达最优点 (convex loss) 或者局部最优点 (non-convex loss)。伪代码：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nb_epochs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shuffle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;batch&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_batches&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;batch_size&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;50&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 每个step取50个样本
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;params_grad&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;evaluate_gradient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loss_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;batch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;learning_rate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params_grad&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;2-问题挑战&quot;&gt;2 问题挑战&lt;/h2&gt;
+
+&lt;p&gt;Mini-batch gradient descent 虽然一定程度上克服了 BGD 和 SGD 的一些缺点，但是还面临如下问题：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;难以选择合适的学习率，过小导致训练速度慢，过大导致 loss 波动甚至发散；&lt;/li&gt;
+  &lt;li&gt;可以对学习率动态调整，如训练过程中逐渐减小学习率，但是如何减小，减小多少也是需要提前定义的。而数据集的不同可能需要不同的调整策略；&lt;/li&gt;
+  &lt;li&gt;同一个学习率对不同参数的效果可能大相径庭，如果数据集各个特征的频率 (出现次数) 差异较大，我们可能不想对它们采取同样的更新策略。例如频率较小的特征，可能需要较大的学习率；&lt;/li&gt;
+  &lt;li&gt;一个较大的问题是目前很多模型 (使用神经网络) 都是 non-convex 的，所以模型很可能被训练到一个局部最优点。另外，模型如果落入&lt;a href=&quot;https://en.wikipedia.org/wiki/Saddle_point&quot;&gt;鞍点&lt;/a&gt; (saddle points)，就很难继续训练，因为各个方向的梯度都几乎为 0。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;3-梯度下降优化算法&quot;&gt;3 梯度下降优化算法&lt;/h2&gt;
+
+&lt;p&gt;接下来介绍实践中常用于应对上述问题的方法 (不包括对高维数据计算复杂度较大的方法，如二阶牛顿法)。&lt;/p&gt;
+
+&lt;h3 id=&quot;31-momentum&quot;&gt;3.1 Momentum&lt;/h3&gt;
+
+&lt;p&gt;Momentum 又称为动量法，其思路很简单。想象一个小球从高处滚落，小球的速度是矢量，可以分解为各个方向的分量，一直下降的方向的速度分量会越来越大，而有下降又有上升的方向，速度分量会缓慢增加、甚至减少。从下面的示意图中可以看到 momentum 方法速度非常快。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Optimization.assets/sgd_comparison.gif&quot; alt=&quot;GitHub - ilguyi/optimizers.numpy&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;在 SGD with moment 方法中，我们维持一个梯度累积向量 $v$ (类比小球速度矢量)，公式如下：&lt;/p&gt;
+
+\[\begin{align}
+\begin{split}
+v_t &amp;amp;= \gamma v_{t-1} + \eta \nabla_\theta J( \theta) \\
+\theta &amp;amp;= \theta - v_t
+\end{split}
+\end{align}\]
+
+&lt;p&gt;有些文章中的符号是相反的，也是正确的：&lt;/p&gt;
+
+\[\begin{align}
+\begin{split}
+v_t &amp;amp;= \gamma v_{t-1} - \eta \nabla_\theta J( \theta) \\
+\theta &amp;amp;= \theta + v_t
+\end{split}
+\end{align}\]
+
+&lt;p&gt;$\gamma$ 是 momentum 的权重，一般取 0.9。&lt;/p&gt;
+
+&lt;h3 id=&quot;32-nesterov-accelerated-gradient&quot;&gt;3.2 ​Nesterov Accelerated Gradient&lt;/h3&gt;
+
+&lt;p&gt;Nesterov Accelerated Gradient(NAG) 对 momentum 做了一点改进：&lt;/p&gt;
+
+\[\begin{align}
+\begin{split}
+v_t &amp;amp;= \gamma v_{t-1} + \eta \nabla_\theta J(\theta-\gamma v_{t-1}) \\
+\theta &amp;amp;= \theta - v_t
+\end{split}
+\end{align}\]
+
+&lt;p&gt;NAG 先往前迈一步，即 $\theta-\gamma v_{t-1}$，然后计算梯度，接着用计算出的梯度修正当前的梯度累积量。而 momentum 是先在当前位置计算梯度，然后再跳一大步更新位置。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Optimization.assets/nesterov.png&quot; alt=&quot;nesterov&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;上图中，绿色为最佳路线，蓝色为 momentum 路线 (先计算梯度，累计，再跳一大步)，褐色 + 红色为 NAG 路线 (先跳一大步，再计算梯度，修正)。&lt;/p&gt;
+
+&lt;h3 id=&quot;33-adagrad&quot;&gt;3.3 AdaGrad&lt;/h3&gt;
+
+&lt;p&gt;‎AdaGrad‎ ‎可使学习速率适应参数。它对样本中出现频率较高的特征对应的参数执行较小的更新，对频率较低的特征对应的参数执行较大的更新。其更新规则如下：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;在步骤 t，用 $s_t$ 保存各个参数每个 step 的梯度的平方和：&lt;/p&gt;
+
+\[s_t = s_{t-1} + g_t\odot g_t\]
+
+    &lt;p&gt;这里 $\odot$ 是元素对应相乘，即计算梯度向量每个元素的平方。可以看出，如果某个参数下降很快，那么 $s_t$ 对应分量的累计就越大。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;更新参数：&lt;/p&gt;
+
+\[\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{s_t + \epsilon}} \odot g_t\]
+
+    &lt;p&gt;因为下降越快的参数 $s_t$ 中的分量越大，那么 $\frac{\eta}{\sqrt{s_t + \epsilon}}$ 就会越小，即学习速率就更小，反之下降慢的参数，对应的学习速率就高一点。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这里的 $\epsilon$ 是一个很小的正值，防止计算过程中除零 (通常取 $1e-8$ 级别的数)。另外一点是不开方的话，效果会很差。&lt;/p&gt;
+
+&lt;p&gt;AdaGrad 的好处是不需要手动调整学习率。但有个缺点：由于累积梯度向量 $s_t$ 的元素每个步骤新增项都是正数 (该分量梯度的平方)，因此在训练期间累积的总和不断增加， $\frac{\eta}{\sqrt{s_t + \epsilon}}$ 不断减小，导致学习率缩小并变得极小 (学习率消失)‎。&lt;/p&gt;
+
+&lt;p&gt;AdaGrad 于 2011 年被提出，由于学习率消失的问题，已经基本无人采用，具体细节可以阅读论文 ”Duchi, J., Hazan, E., &amp;amp; Singer, Y. (2011). Adaptive Subgradient Methods for Online Learning and Stochastic Optimization. Journal of Machine Learning Research, 12, 2121–2159.“。&lt;/p&gt;
+
+&lt;h3 id=&quot;34-adadelta&quot;&gt;3.4 AdaDelta&lt;/h3&gt;
+
+&lt;p&gt;AdaDelta 是 ‎AdaGrad‎ 的改良版本，目的是解决梯度平方累计导致的学习速率极小(消失)的问题。其思路很简单，维护一个累积窗口，而不是累积每一步的梯度。具体参考：&lt;a href=&quot;https://paperswithcode.com/method/adadelta&quot;&gt;AdaDelta Explained&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;四种方法比较：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Optimization.assets/sgd_adagrad.png&quot; alt=&quot;sgd_adagrad&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;35-rmsprop&quot;&gt;3.5 RMSProp&lt;/h3&gt;
+
+&lt;p&gt;RMSprop 未经论文发表，是一种适应性的学习速率调整方法，该方法由 Geoff Hinton 在他的 Coursera &lt;a href=&quot;http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf&quot;&gt;课程讲义&lt;/a&gt;中提出，和 AdaDelta 的目的相同，也是为了解决 AdaGrad 学习率消失问题。&lt;/p&gt;
+
+&lt;p&gt;RMSProp 的更新规则如下：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;在步骤 t，计算：&lt;/p&gt;
+
+\[s_t = \gamma s_{t-1} + (1-\gamma)g_t\odot g_t\]
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;更新参数：&lt;/p&gt;
+
+\[\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{s_t + \epsilon}} \odot g_t\]
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;我们把第一步计算 $s_t$ 的公式展开：&lt;/p&gt;
+
+\[\begin{split}\begin{aligned}
+\mathbf{s}_t &amp;amp; = (1 - \gamma) \mathbf{g}_t^2 + \gamma \mathbf{s}_{t-1} \\
+&amp;amp; = (1 - \gamma) \left(\mathbf{g}_t^2 + \gamma \mathbf{g}_{t-1}^2 + \gamma^2 \mathbf{g}_{t-2} + \ldots, \right).
+\end{aligned}\end{split}\]
+
+&lt;p&gt;我们知道 $1 + \gamma + \gamma^2 + \ldots = \frac{1}{1-\gamma}$，即 $s_t$ 是之前步骤累积梯度的期望值，因为 $\gamma &amp;lt; 1$，越早的梯度累计对当前的影响越小，很多步之前的梯度累计甚至可以忽略不计，故不会出现 $s_t$ 无限制增长，导致学习率消失的问题。我们可以使用 $\gamma$ 来控制 $s_t$ 对历史梯度的累积范围。下面的图片是不同 $\gamma$ 取值对应的历史梯度累计的权重：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Optimization.assets/rmsprop_gamma.png&quot; alt=&quot;rmsprop_gamma&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;从上图可以看出，取值越大，$s_t$ 越”关注“历史积累的梯度。40 步之前的积累，虽然在解析式中不为 0，但在内存中数值上已经为 0。&lt;/p&gt;
+
+&lt;h3 id=&quot;36-adam&quot;&gt;3.6 Adam&lt;/h3&gt;
+
+&lt;p&gt;Adam 是 RMSProp 和 Momentum 的结合。&lt;/p&gt;
+
+\[\begin{split}\begin{aligned}
+    \mathbf{v}_t &amp;amp; \leftarrow \beta_1 \mathbf{v}_{t-1} + (1 - \beta_1) \mathbf{g}_t \\
+    \mathbf{s}_t &amp;amp; \leftarrow \beta_2 \mathbf{s}_{t-1} + (1 - \beta_2) \mathbf{g}_t \odot \mathbf{g}_t
+\end{aligned}\end{split}\]
+
+&lt;p&gt;第一行公式即 Momentum，通常 $\beta_1 = 0.9$。第二行即 RMSProp，通常 $\beta_2 = 0.999$。&lt;/p&gt;
+
+&lt;p&gt;在刚开始时我们把 $\mathbf{v}_t$ 和 $\mathbf{s}_t$ 设为 0，即 $\mathbf{v}_0 = \mathbf{s}_0 = 0$，那么有 $\mathbf{v}_1 = 0.1 \mathbf{g}_1$，而不是真正的梯度值。$\mathbf{s}_1$ 也有同样的问题。故越早的时间步，偏差越大，因此我们要修正偏差。&lt;/p&gt;
+
+&lt;p&gt;在时间步 t 我们得到&lt;/p&gt;
+
+\[\boldsymbol{v}_t = (1-\beta_1) \sum_{i=1}^{t} \beta_1^{t-i} \boldsymbol{g}_i\]
+
+&lt;p&gt;(上面第一个式子展开)，将过去各时间步小批量随机梯度的权值相加，得到&lt;/p&gt;
+
+\[(1-\beta_1) \sum_{i=1}^t \beta_1^{t-i} = 1 - \beta_1^t\]
+
+&lt;p&gt;需要注意的是，当 t 较小时，过去各时间步小批量随机梯度权值之和会较小。例如，当 $\beta_1 = 0.9$ 时，$\mathbf{v}_1 = 0.1 \mathbf{g}_1$，所有权值之和为 0.1。为了消除这样的影响，对于任意时间步 t，我们可以将 $\mathbf{v}_t$ 再除以$1 - \beta_1^t$，从而使过去各时间步小批量随机梯度权值之和为1。这也叫作偏差修正。在Adam算法中，我们对变量均 $\mathbf{v}_t$ 和 $\mathbf{s}_t$ 作偏差修正：&lt;/p&gt;
+
+\[\hat{\boldsymbol{v}}_t \leftarrow \frac{\boldsymbol{v}_t}{1 - \beta_1^t},\]
+
+\[\hat{\boldsymbol{s}}_t \leftarrow \frac{\boldsymbol{s}_t}{1 - \beta_2^t}.\]
+
+&lt;p&gt;最后进行更新：&lt;/p&gt;
+
+\[\boldsymbol{x}_t \leftarrow
+\boldsymbol{x}_t - \frac{\eta \hat{\boldsymbol{v}}_t}{\sqrt{\hat{\boldsymbol{s}}_t} + \epsilon},\]
+
+&lt;p&gt;其中 $\eta$ 是学习率，$\epsilon$ 是为了维持数值稳定性而添加的常数，如 $10^{−8}$。和 AdaGrad 算法、RMSProp 算法以及AdaDelta 算法一样，目标函数自变量中每个元素都分别拥有自己的学习率。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;👍强烈推荐以下视频，讲了Momentum, Adagrad, RMSProp, Adam 的原理和演进关系：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;B站(无字幕)：&lt;a href=&quot;https://www.bilibili.com/video/BV134411q793?share_source=copy_web&quot;&gt;https://www.bilibili.com/video/BV134411q793?share_source=copy_web&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;油管(有自动生成字幕)：&lt;a href=&quot;https://www.youtube.com/watch?v=gmwxUy7NYpA&quot;&gt;L26/1 Momentum, Adagrad, RMSProp, Adam - YouTube&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;37-其他优化器&quot;&gt;3.7 其他优化器&lt;/h3&gt;
+
+&lt;p&gt;该篇 &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/&quot;&gt;review&lt;/a&gt; 还讲解了其他优化器，由于在实践中，除非是专门研究优化器，基本不会使用它们，所以本文节约时间点到为止。这些优化器均在 &lt;a href=&quot;https://paperswithcode.com/methods/category/stochastic-optimization&quot;&gt;An Overview of Stochastic Optimization&lt;/a&gt; 列出，感兴趣可以查看。下面是各种优化器在鞍点上的表现：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Optimization.assets/saddle_point_evaluation_optimizers.gif&quot; alt=&quot;saddle_point_evaluation_optimizers&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;38-选用哪个优化器&quot;&gt;3.8 选用哪个优化器？&lt;/h3&gt;
+
+&lt;p&gt;该篇 &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/&quot;&gt;review&lt;/a&gt; 中写道：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;So, which optimizer should you now use? If your input data is sparse, then you likely achieve the best results using one of the adaptive learning-rate methods. An additional benefit is that you won’t need to tune the learning rate but likely achieve the best results with the default value.&lt;/p&gt;
+
+  &lt;p&gt;In summary, RMSprop is an extension of Adagrad that deals with its radically diminishing learning rates. It is identical to Adadelta, except that Adadelta uses the RMS of parameter updates in the numinator update rule. Adam, finally, adds bias-correction and momentum to RMSprop. Insofar, RMSprop, Adadelta, and Adam are very similar algorithms that do well in similar circumstances. Kingma et al. [&lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fn14&quot;&gt;14:1]&lt;/a&gt; show that its bias-correction helps Adam slightly outperform RMSprop towards the end of optimization as gradients become sparser. Insofar, ==Adam might be the best overall choice==.&lt;/p&gt;
+
+  &lt;p&gt;Interestingly, many recent papers use vanilla SGD without momentum and a simple learning rate annealing schedule. As has been shown, SGD usually achieves to find a minimum, but it might take significantly longer than with some of the optimizers, is much more reliant on a robust initialization and annealing schedule, and may get stuck in saddle points rather than local minima. Consequently, if you care about fast convergence and train a deep or complex neural network, you should choose one of the adaptive learning rate methods.&lt;/p&gt;
+
+  &lt;p&gt;​                                                                                                  –  “An overview of gradient descent optimization algorithms”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;大多数情况用 Adam 就对了！&lt;/p&gt;
+
+&lt;h2 id=&quot;4-其他优化策略&quot;&gt;4 其他优化策略&lt;/h2&gt;
+
+&lt;p&gt;该篇 &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#additionalstrategiesforoptimizingsgd&quot;&gt;review&lt;/a&gt; 中提到的关于 SGD 的其他优化策略包括：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://stats.stackexchange.com/questions/245502/why-should-we-shuffle-data-while-training-a-neural-network&quot;&gt;Shuffling&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://machinelearningmastery.com/batch-normalization-for-training-of-deep-neural-networks/&quot;&gt;Batch Normalization&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://machinelearningmastery.com/early-stopping-to-avoid-overtraining-neural-network-models/&quot;&gt;Early Stopping&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://arxiv.org/abs/1511.06807&quot;&gt;Gradient Noise&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Shuffling 和 Batch Normalization 是实践中常用的。&lt;/p&gt;
+
+&lt;h2 id=&quot;推荐阅读&quot;&gt;推荐阅读&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html&quot;&gt;An overview of gradient descent optimization algorithms (ruder.io)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://paperswithcode.com/methods/category/stochastic-optimization&quot;&gt;An Overview of Stochastic Optimization&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://d2l.ai/chapter_optimization/index.html&quot;&gt;11. Optimization Algorithms — Dive into Deep Learning 0.16.6 documentation (d2l.ai)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://distill.pub/2017/momentum/&quot;&gt;Why Momentum Really Works (distill.pub)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://stats.stackexchange.com/questions/245502/why-should-we-shuffle-data-while-training-a-neural-network&quot;&gt;Why should we shuffle data while training a neural network?&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://machinelearningmastery.com/batch-normalization-for-training-of-deep-neural-networks/&quot;&gt;A Gentle Introduction to Batch Normalization for Deep Neural Networks (machinelearningmastery.com)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://machinelearningmastery.com/early-stopping-to-avoid-overtraining-neural-network-models/&quot;&gt;A Gentle Introduction to Early Stopping to Avoid Overtraining Neural Networks (machinelearningmastery.com)&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;参考文献&quot;&gt;参考文献&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;H. Robinds and S. Monro, “A stochastic approximation method,” Annals of Mathematical Statistics, vol. 22, pp. 400–407, 1951. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref1&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Darken, C., Chang, J., &amp;amp; Moody, J. (1992). Learning rate schedules for faster stochastic gradient search. Neural Networks for Signal Processing II Proceedings of the 1992 IEEE Workshop, (September), 1–11. &lt;a href=&quot;https://hub.pubmedplus.com/10.1109/NNSP.1992.253713&quot;&gt;http://doi.org/10.1109/NNSP.1992.253713&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref2&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Dauphin, Y., Pascanu, R., Gulcehre, C., Cho, K., Ganguli, S., &amp;amp; Bengio, Y. (2014). Identifying and attacking the saddle point problem in high-dimensional non-convex optimization. arXiv, 1–14. Retrieved from &lt;a href=&quot;https://arxiv.org/abs/1406.2572&quot;&gt;http://arxiv.org/abs/1406.2572&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref3&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Sutton, R. S. (1986). Two problems with backpropagation and other steepest-descent learning procedures for networks. Proc. 8th Annual Conf. Cognitive Science Society. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref4&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Qian, N. (1999). On the momentum term in gradient descent learning algorithms. Neural Networks : The Official Journal of the International Neural Network Society, 12(1), 145–151. &lt;a href=&quot;https://hub.pubmedplus.com/10.1016/S0893-6080(98)00116-6&quot;&gt;http://doi.org/10.1016/S0893-6080(98)00116-6&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref5&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Nesterov, Y. (1983). A method for unconstrained convex minimization problem with the rate of convergence o(1/k2). Doklady ANSSSR (translated as Soviet.Math.Docl.), vol. 269, pp. 543– 547. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref6&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Bengio, Y., Boulanger-Lewandowski, N., &amp;amp; Pascanu, R. (2012). Advances in Optimizing Recurrent Networks. Retrieved from &lt;a href=&quot;https://arxiv.org/abs/1212.0901&quot;&gt;http://arxiv.org/abs/1212.0901&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref7&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Sutskever, I. (2013). Training Recurrent neural Networks. PhD Thesis. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref8&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Duchi, J., Hazan, E., &amp;amp; Singer, Y. (2011). Adaptive Subgradient Methods for Online Learning and Stochastic Optimization. Journal of Machine Learning Research, 12, 2121–2159. Retrieved from &lt;a href=&quot;http://jmlr.org/papers/v12/duchi11a.html&quot;&gt;http://jmlr.org/papers/v12/duchi11a.html&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref9&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Dean, J., Corrado, G. S., Monga, R., Chen, K., Devin, M., Le, Q. V, … Ng, A. Y. (2012). Large Scale Distributed Deep Networks. NIPS 2012: Neural Information Processing Systems, 1–11. &lt;a href=&quot;http://papers.nips.cc/paper/4687-large-scale-distributed-deep-networks.pdf&quot;&gt;http://papers.nips.cc/paper/4687-large-scale-distributed-deep-networks.pdf&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref10&quot;&gt;↩︎&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref10:1&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Pennington, J., Socher, R., &amp;amp; Manning, C. D. (2014). Glove: Global Vectors for Word Representation. Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing, 1532–1543. &lt;a href=&quot;https://hub.pubmedplus.com/10.3115/v1/D14-1162&quot;&gt;http://doi.org/10.3115/v1/D14-1162&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref11&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Duchi et al. [3] give this matrix as an alternative to the &lt;em&gt;full&lt;/em&gt; matrix containing the outer products of all previous gradients, as the computation of the matrix square root is infeasible even for a moderate number of parameters dd. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref12&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Zeiler, M. D. (2012). ADADELTA: An Adaptive Learning Rate Method. Retrieved from &lt;a href=&quot;https://arxiv.org/abs/1212.5701&quot;&gt;http://arxiv.org/abs/1212.5701&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref13&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Kingma, D. P., &amp;amp; Ba, J. L. (2015). Adam: a Method for Stochastic Optimization. International Conference on Learning Representations, 1–13. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref14&quot;&gt;↩︎&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref14:1&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Heusel, M., Ramsauer, H., Unterthiner, T., Nessler, B., &amp;amp; Hochreiter, S. (2017). GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium. In Advances in Neural Information Processing Systems 30 (NIPS 2017). &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref15&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Dozat, T. (2016). Incorporating Nesterov Momentum into Adam. ICLR Workshop, (1), 2013–2016. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref16&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Huang, G., Liu, Z., Weinberger, K. Q., &amp;amp; van der Maaten, L. (2017). Densely Connected Convolutional Networks. In Proceedings of CVPR 2017. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref17&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Johnson, M., Schuster, M., Le, Q. V, Krikun, M., Wu, Y., Chen, Z., … Dean, J. (2016). Google’s Multilingual Neural Machine Translation System: Enabling Zero-Shot Translation. arXiv Preprint arXiv:1611.0455. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref18&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Reddi, Sashank J., Kale, Satyen, &amp;amp; Kumar, Sanjiv. On the Convergence of Adam and Beyond. Proceedings of ICLR 2018. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref19&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Loshchilov, I., &amp;amp; Hutter, F. (2019). Decoupled Weight Decay Regularization. In Proceedings of ICLR 2019. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref20&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Ma, J., &amp;amp; Yarats, D. (2019). Quasi-hyperbolic momentum and Adam for deep learning. In Proceedings of ICLR 2019. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref21&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Lucas, J., Sun, S., Zemel, R., &amp;amp; Grosse, R. (2019). Aggregated Momentum: Stability Through Passive Damping. In Proceedings of ICLR 2019. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref22&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Niu, F., Recht, B., Christopher, R., &amp;amp; Wright, S. J. (2011). Hogwild! : A Lock-Free Approach to Parallelizing Stochastic Gradient Descent, 1–22. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref23&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Mcmahan, H. B., &amp;amp; Streeter, M. (2014). Delay-Tolerant Algorithms for Asynchronous Distributed Online Learning. Advances in Neural Information Processing Systems (Proceedings of NIPS), 1–9. Retrieved from &lt;a href=&quot;http://papers.nips.cc/paper/5242-delay-tolerant-algorithms-for-asynchronous-distributed-online-learning.pdf&quot;&gt;http://papers.nips.cc/paper/5242-delay-tolerant-algorithms-for-asynchronous-distributed-online-learning.pdf&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref24&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Abadi, M., Agarwal, A., Barham, P., Brevdo, E., Chen, Z., Citro, C., … Zheng, X. (2015). TensorFlow : Large-Scale Machine Learning on Heterogeneous Distributed Systems. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref25&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Zhang, S., Choromanska, A., &amp;amp; LeCun, Y. (2015). Deep learning with Elastic Averaging SGD. Neural Information Processing Systems Conference (NIPS 2015), 1–24. Retrieved from &lt;a href=&quot;https://arxiv.org/abs/1412.6651&quot;&gt;http://arxiv.org/abs/1412.6651&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref26&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;LeCun, Y., Bottou, L., Orr, G. B., &amp;amp; Müller, K. R. (1998). Efficient BackProp. Neural Networks: Tricks of the Trade, 1524, 9–50. &lt;a href=&quot;https://hub.pubmedplus.com/10.1007/3-540-49430-8_2&quot;&gt;http://doi.org/10.1007/3-540-49430-8_2&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref27&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Bengio, Y., Louradour, J., Collobert, R., &amp;amp; Weston, J. (2009). Curriculum learning. Proceedings of the 26th Annual International Conference on Machine Learning, 41–48. &lt;a href=&quot;https://hub.pubmedplus.com/10.1145/1553374.1553380&quot;&gt;http://doi.org/10.1145/1553374.1553380&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref28&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Zaremba, W., &amp;amp; Sutskever, I. (2014). Learning to Execute, 1–25. Retrieved from &lt;a href=&quot;https://arxiv.org/abs/1410.4615&quot;&gt;http://arxiv.org/abs/1410.4615&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref29&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Ioffe, S., &amp;amp; Szegedy, C. (2015). Batch Normalization : Accelerating Deep Network Training by Reducing Internal Covariate Shift. arXiv Preprint arXiv:1502.03167v3. &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref30&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Neelakantan, A., Vilnis, L., Le, Q. V., Sutskever, I., Kaiser, L., Kurach, K., &amp;amp; Martens, J. (2015). Adding Gradient Noise Improves Learning for Very Deep Networks, 1–11. Retrieved from &lt;a href=&quot;https://arxiv.org/abs/1511.06807&quot;&gt;http://arxiv.org/abs/1511.06807&lt;/a&gt; &lt;a href=&quot;https://ruder.io/optimizing-gradient-descent/index.html#fnref31&quot;&gt;↩︎&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</content><author><name>Tianxin Xie</name></author><category term="MachineLearning" /><category term="MachineLearning" /><summary type="html">在机器学习实践中，我们会用许多手段来提升梯度下降算法的性能。本文主要参考一篇 review，总结了在模型训练过程中常用的优化方法。本文的主要内容翻译自该篇 review，做了增删改，并加上了部分自己的理解，以及额外的图示、视频和阅读材料。</summary></entry><entry><title type="html">机器学习笔记 - 激活函数总结</title><link href="/2021/activations" rel="alternate" type="text/html" title="机器学习笔记 - 激活函数总结" /><published>2021-06-30T00:00:00+08:00</published><updated>2021-06-30T00:00:00+08:00</updated><id>/2021/MLNotes_Activations</id><content type="html" xml:base="/2021/activations">&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/neuron.png&quot; alt=&quot;neuron&quot; style=&quot;zoom:80%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;激活函数模拟了大脑中神经元的信号传递，上图是神经元图示，下图是机器学习中的数学模型（图片均来自&lt;a href=&quot;[CS231n Convolutional Neural Networks for Visual Recognition](https://cs231n.github.io/neural-networks-1/#quick)&quot;&gt;CS231n&lt;/a&gt;）。本文总结了大部分激活函数，包括他们数学表示、性质、优缺点、以及导数计算。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/neuron_model.jpeg&quot; alt=&quot;neural_model&quot; style=&quot;zoom:80%;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;sigmoid&quot;&gt;Sigmoid&lt;/h2&gt;
+
+&lt;p&gt;曾经在网络中用得很多，现在不推荐在网络的中间层使用，可以作为输出层使用。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[\delta(x) = \frac{1}{1+e^{-x}}\]
+
+&lt;p&gt;&lt;strong&gt;导数&lt;/strong&gt;：&lt;/p&gt;
+
+\[\delta&apos;(x) = \delta(x)(1-\delta(x))\]
+
+&lt;p&gt;&lt;strong&gt;图像&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/sigmoid.png&quot; alt=&quot;relu&quot; style=&quot;zoom:25%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;性质/作用&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;将输入规整到 $[0, 1]$ 的区间；&lt;/li&gt;
+  &lt;li&gt;正好能“解释”符合神经元的“激发”（sigmoid 曾因此很受欢迎）。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;从图像可以看出，远离坐标原点的输入会导致梯度消失；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;sigmoid 的输出不是以 0 为中心的，而是全为非负数，会导致假设空间被缩小（维度越高越严重），很可能学不到最优参数；&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/gradient_directions.png&quot; style=&quot;zoom:40%;&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;在实际应用时指数运算速度慢。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;strong&gt;建议&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;不推荐在网络中间层使用；&lt;/li&gt;
+  &lt;li&gt;可作为输出层使用（如logistics regression）。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;tanh&quot;&gt;Tanh&lt;/h2&gt;
+
+&lt;p&gt;tanh 函数和 sigmoid 有许多相似之处，但是比 sigmoid 好一点的是 tanh 的输出是以 0 为中心的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[tanh(x) = \frac{sinh(x)}{cosh(x)} = \frac{e^{x}-e^{-x}}{e^{x}+e^{-x}} = \frac{e^{2x}-1}{e^{2x}+1}\]
+
+&lt;p&gt;&lt;strong&gt;导数&lt;/strong&gt;：&lt;/p&gt;
+
+\[tanh&apos;(x) = 1 - tanh^2(x)\]
+
+&lt;p&gt;&lt;strong&gt;图像&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/tanh.png&quot; alt=&quot;relu&quot; style=&quot;zoom:25%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;性质/作用&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;将输入规整到 $[-1, 1]$ 的区间；&lt;/li&gt;
+  &lt;li&gt;以 0 为中心（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;从图像可以看出，远离坐标原点的输入会导致梯度消失；&lt;/li&gt;
+  &lt;li&gt;在实际应用时指数运算速度慢。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;strong&gt;建议&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;不推荐在网络中间层使用；&lt;/li&gt;
+  &lt;li&gt;可作为输出层使用。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;relu&quot;&gt;ReLU&lt;/h2&gt;
+
+&lt;p&gt;ReLU 的全称是 Rectified Linear Unit（线性修正单元），相较于 sigmoid 和 tanh 有诸多好处。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[f(x) = max(0, x)\]
+
+&lt;p&gt;&lt;strong&gt;导数&lt;/strong&gt;：&lt;/p&gt;
+
+\[f&apos;(x) =
+\begin{cases}
+0, &amp;amp; \text{if $x \le 0$} \\
+1, &amp;amp; \text{if $x &amp;gt; 0$}
+\end{cases}\]
+
+&lt;p&gt;&lt;strong&gt;图像&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/relu.png&quot; alt=&quot;relu&quot; style=&quot;zoom:25%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;性质/作用&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;输入大于 0 时，不会出现梯度消失问题（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）；&lt;/li&gt;
+  &lt;li&gt;计算效率高（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）；&lt;/li&gt;
+  &lt;li&gt;收敛速度比 sigmoid / tanh 快得多（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;不是以 0 为中心的，和 sigmoid 有同样的问题；&lt;/li&gt;
+  &lt;li&gt;在输入小于 0 时会有梯度消失问题。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;strong&gt;建议&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;推荐使用。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;leaky-relu&quot;&gt;Leaky ReLU&lt;/h2&gt;
+
+&lt;p&gt;Leaky ReLU 是 ReLU 的改进，主要是为了解决输入小于 0 时的梯度消失问题。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[f(x) = max(\alpha x, x)\]
+
+&lt;p&gt;$\alpha$ 是一个超参数，通常取 0.1。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;导数&lt;/strong&gt;：&lt;/p&gt;
+
+\[f&apos;(x) =
+\begin{cases}
+\alpha, &amp;amp; \text{if $x \le 0$} \\
+1, &amp;amp; \text{if $x &amp;gt; 0$}
+\end{cases}\]
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/leaky_relu.png&quot; alt=&quot;relu&quot; style=&quot;zoom:30%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;性质/作用&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;不会出现梯度消失问题（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）；&lt;/li&gt;
+  &lt;li&gt;计算效率高（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）；&lt;/li&gt;
+  &lt;li&gt;收敛速度比 sigmoid / tanh 快得多（&lt;font color=&quot;green&quot;&gt;Good&lt;/font&gt;）；&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;变种&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;将 $\alpha$ 设置为可学习的参数（而不是手动设定），称为PReLU。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;建议&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;推荐使用。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;其他激活函数&quot;&gt;其他激活函数&lt;/h2&gt;
+
+&lt;p&gt;这里主要列出了另外 3 个不常用的激活函数：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Exponential Linear Unit (ELU)&lt;/li&gt;
+  &lt;li&gt;Scaled Exponential Linear Unit (SELU)&lt;/li&gt;
+  &lt;li&gt;Gaussian Error Linear Unit (GELU)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;elu&quot;&gt;ELU&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[f(x) =
+\begin{cases}
+x, &amp;amp; \text{if $x &amp;gt; 0$} \\
+\alpha(e^x-1), &amp;amp; \text{if $x \le 0$}
+\end{cases}\]
+
+&lt;p&gt;$ \alpha $ 是超参数，默认取 1。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图像&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/elu.png&quot; alt=&quot;elu&quot; style=&quot;zoom:25%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;性质/作用&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;具有 ReLU 的所有优点；&lt;/li&gt;
+  &lt;li&gt;平均值更加靠近 0；&lt;/li&gt;
+  &lt;li&gt;输入值为负数时较 Leaky ReLU 更加鲁棒。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;计算量大&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;selu&quot;&gt;SELU&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[selu(x) =
+\begin{cases}
+\lambda x, &amp;amp; \text{if $x &amp;gt; 0$} \\
+\lambda\alpha(e^x-1), &amp;amp; \text{if $x \le 0$}
+\end{cases}\]
+
+&lt;p&gt;论文”Klambauer et al, Self-Normalizing Neural Networks, ICLR 2017“给出了最佳取值：&lt;/p&gt;
+
+&lt;p&gt;$\alpha = 1.6732632423543772848170429916717$&lt;/p&gt;
+
+&lt;p&gt;$\lambda = 1.0507009873554804934193349852946$&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图像&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/selu.png&quot; alt=&quot;selu&quot; style=&quot;zoom:50%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;性质/作用&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;ELU 的 Scaled 版本，对于很深的网络效果较好；&lt;/li&gt;
+  &lt;li&gt;具有”Self-Normalizing“效果，训练很深的网络时无需 batch normalization。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;计算量大&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;gelu&quot;&gt;GELU&lt;/h3&gt;
+
+&lt;p&gt;GELU 较为复杂，主要有以下特点（Copy 自 EECS 498-007 Slides）：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Idea: Multiply input by 0 or 1  at random; large values more  likely to be multiplied by 1,  small values more likely to be  multiplied by 0 (data-dependent dropout)&lt;/li&gt;
+  &lt;li&gt;Take expectation over  randomness&lt;/li&gt;
+  &lt;li&gt;Very common in Transformers (BERT, GPT, GPT-2, GPT-3)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;公式&lt;/strong&gt;：&lt;/p&gt;
+
+\[\begin{align}
+gelu(x) &amp;amp;= xP(X \le x) \\
+&amp;amp;= \frac{x}{2}(1+erf(x/\sqrt{2})) \\
+&amp;amp;\approx x\delta(1.702x)
+\end{align}\]
+
+&lt;p&gt;其中随机变量 $X \thicksim N(0,1)$。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图像&lt;/strong&gt;：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/gelu.png&quot; alt=&quot;gelu&quot; style=&quot;zoom:25%;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;具体细节可以阅读论文：&lt;a href=&quot;https://arxiv.org/pdf/1606.08415v3.pdf&quot;&gt;https://arxiv.org/pdf/1606.08415v3.pdf&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;各种激活函数对比&quot;&gt;各种激活函数对比&lt;/h2&gt;
+
+&lt;p&gt;下面是在 CIFAR-10 上各种激活函数的表现（图像来自论文 &lt;a href=&quot;https://arxiv.org/abs/1710.05941&quot;&gt;https://arxiv.org/abs/1710.05941&lt;/a&gt;）：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Activations.assets/accuracy_of_activations.png&quot; alt=&quot;activations performance&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;总的来说，不想折腾的话，用 ReLU 就行了，别用 sigmoid 和 tanh。&lt;/p&gt;
+
+&lt;h2 id=&quot;参考文章&quot;&gt;参考文章&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cs231n.github.io/neural-networks-1/&quot;&gt;CS231n Convolutional Neural Networks for Visual Recognition&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://web.eecs.umich.edu/~justincj/slides/eecs498/FA2020/598_FA2020_lecture10.pdf&quot;&gt;598_FA2020_lecture10.pdf (umich.edu)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://machinelearningmastery.com/rectified-linear-activation-function-for-deep-learning-neural-networks/&quot;&gt;A Gentle Introduction to the Rectified Linear Unit (ReLU)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.math24.net/derivatives-hyperbolic-functions&quot;&gt;Derivatives of Hyperbolic Functions&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://medium.com/@shoray.goel/gelu-gaussian-error-linear-unit-4ec59fb2e47c&quot;&gt;GELU activation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;GELU paper- &lt;a href=&quot;https://arxiv.org/pdf/1606.08415v3.pdf&quot;&gt;https://arxiv.org/pdf/1606.08415v3.pdf&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://arxiv.org/abs/1710.05941&quot;&gt;https://arxiv.org/abs/1710.05941&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</content><author><name>Tianxin Xie</name></author><category term="MachineLearning" /><category term="MachineLearning" /><summary type="html"></summary></entry><entry><title type="html">机器学习笔记 - Softmax</title><link href="/2021/softmax" rel="alternate" type="text/html" title="机器学习笔记 - Softmax" /><published>2021-06-17T00:00:00+08:00</published><updated>2021-06-17T00:00:00+08:00</updated><id>/2021/MLNotes_Softmax</id><content type="html" xml:base="/2021/softmax">&lt;p&gt;Softmax 常用于多分类的情况，它将一个 N 维的由任意实数组成的向量作为输入，然后输出一个 N 维的概率向量，且其所有分量之和为 1。我们先来看一个有 5 类（类别编号为 0, 1, 2, 3, 4）输出的多分类器：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/post_imgs/MLNotes_Softmax.assets/softmax01.png&quot; alt=&quot;softmax01&quot; title=&quot;5个类别的Softmax分类器&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;如图所示，$X_i$ 表示数据集中第 $i$ 个样本，有 N 个特征；$W$ 表示通过学习得到的参数矩阵（N 行 5 列）；$S_i$ 表示经过计算后，输入样本在各个类别上的得分。接着将得分经过”Softmax”处理后，得到样本属于各个类别的概率向量 $P_i$，最后选择概率最高的类别作为输出标签。通常情况下，Softmax 分类器放置在整个模型的结尾处，也就是说上图中 Softmax 的输入 $X_i$ 也可以是前置模块（例如神经网络)的输出。&lt;/p&gt;
+
+&lt;h2 id=&quot;1-预测流程&quot;&gt;1 预测流程&lt;/h2&gt;
+
+&lt;p&gt;上图中绿色部分表示的得分是输入 $X_i$ 和 $W$ 的线性乘积：&lt;/p&gt;
+
+\[S_i = f(X_i, W) = X_i * W\]
+
+&lt;p&gt;接着，用 $S_i$ 的每个分量 $S_{ik}$ 作为指数，做如下计算就得到了概率向量 $P_i$：&lt;/p&gt;
+
+\[P_i = [P_{i,0} = \frac{e^{S_{i,0}}}{\sum_{k=0}^{4}e^{S_{i,k}}}, P_{i,1} = \frac{e^{S_{i,1}}}{\sum_{k=0}^{4}e^{S_{i,k}}}, ..., P_{i,4} = \frac{e^{S_{i,4}}}{\sum_{k=0}^{4}e^{S_{i,k}}}]\]
+
+&lt;p&gt;下面用 numpy 简单模拟一下这个计算过程，首先生成一个随机的 $X_i$ 和 $W$：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;numpy&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;randn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([[&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.79133497&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;1.25991782&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;2.05647627&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.57785825&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.09202159&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.40157209&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.19652735&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.04938573&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.10461471&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.74042572&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;w&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;randn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;w&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.65392227&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;1.89659498&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.11629679&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.93221547&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.77651529&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.07090883&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.15001729&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.1281176&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;2.35069474&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.61484098&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.01960799&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.97765036&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.95673941&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.1911482&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.51133051&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.52650448&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;1.01087258&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.22877655&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.67891746&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.64167637&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.22563436&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.17559678&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.41271418&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;2.7964071&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;1.0986726&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.20037395&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.68407372&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.25964979&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.73397112&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.09695987&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.02523734&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.70474257&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.76772239&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.19074719&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.19775151&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.28158624&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.21311108&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.23231037&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.38678946&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.91647861&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;2.15435732&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.67917135&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.07906748&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.81204621&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.42509496&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+       &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.46912629&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;0.54266569&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.0158846&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.53389348&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.7792223&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;计算该样本在各类别上的得分：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;w&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 计算样本在各类别的得分
+&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;4.13973271&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.64507675&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.55969798&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;2.8374945&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;3.38799113&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;求概率向量 $P_i$：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 使用得分s求指数
+&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([[&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.01592711&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.19299775&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.21019955&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.05857224&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.03377646&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 求各个分类概率
+&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([[&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.03113968&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.37733705&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.41096892&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.11451675&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.06603761&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 概率之和应该为1
+&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;使用 &lt;a href=&quot;https://numpy.org/doc/stable/reference/generated/numpy.argmax.html&quot;&gt;numpy.argmax()&lt;/a&gt; 函数可以获得最大值的下标：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argmax&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 下标从0开始
+&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;获得的下标即是 Softmax 给出的关于输入 $X_i$ 的类别标签。&lt;/p&gt;
+
+&lt;h2 id=&quot;2-loss-函数&quot;&gt;2 Loss 函数&lt;/h2&gt;
+
+&lt;p&gt;Loss 函数衡量了模型在数据集上的表现，Loss 越低，在训练集上的效果越好。在 Softmax 中，样本的标签通常用 one-hot 表示，若训练样本 $X_i$ 的类别编号为 2，则其标签 $y_i = [0, 0, 1, 0, 0]$ 。Softmax 使用&lt;a href=&quot;https://machinelearningmastery.com/cross-entropy-for-machine-learning/&quot;&gt;交叉熵&lt;/a&gt;作为 Loss 损失，对样本 $X_i$，其损失 $L_i$ 如下：&lt;/p&gt;
+
+\[L_i = -log(\frac{e^{S_{i,2}}}{\sum_{k=0}^{4}{e^{S_{i,k}}}})\]
+
+&lt;p&gt;上式中的 $S_{i2}$ 表示训练样本在第 2 类上对应的得分。可以按照 3.1 节中的形式表示为：&lt;/p&gt;
+
+\[L_i = -log(P_{i,2})\]
+
+&lt;p&gt;我们可以继续用 3.1 节中的例子来说明：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([[&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.03113968&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.37733705&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.41096892&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.11451675&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.06603761&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;yi&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 样本标签
+&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Li&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;yi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 计算Li，注意p*yi是元素对应相乘
+&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Li&lt;/span&gt;
+&lt;span class=&quot;mf&quot;&gt;0.8892376972266337&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里需要注意的是，对于两个分布 $p$ 和 $q$，它们的交叉熵的定义如下：&lt;/p&gt;
+
+\[xent(p,q)=-\sum_{k}{p(k)log(q(k))}\]
+
+&lt;p&gt;Softmax 输出的概率我们可以当做一个分布，例如样本 $X_i$ 对应的输出 $p_i = [0.1, 0.3, 0.2, 0.15, 0.25]$，其标签为 $y_i = [0, 0, 1, 0, 0]$，那么它们的交叉熵为：&lt;/p&gt;
+
+\[\begin{align}
+xent(p_i, y_i)
+&amp;amp;= -(0*log(0.1)+0*log(0.3)+1*log(0.2)+0*log(0.15)+0*log(0.25)) \nonumber \\
+&amp;amp;= -1*log(0.2) \nonumber \\
+&amp;amp;= -log(0.2) \nonumber \\
+&amp;amp;= -log(p_{i2}) \nonumber \\
+&amp;amp;= 1.61 \nonumber
+\end{align}\]
+
+&lt;p&gt;因为标签中只有一个 1，其他全是 0，所以单个样本 Softmax 的 Loss 可以简写成：&lt;/p&gt;
+
+\[L_i = -log(\frac{e^{S_{i,t}}}{\sum_{k}{e^{S_{i,k}}}})\]
+
+&lt;p&gt;$S_{it}$ (t for target)表示样本类别标签对应的得分。&lt;/p&gt;
+
+&lt;p&gt;上例中 $S_{it}=0.2$， Loss 为 1.61。若 $p_i = [0.1, 0.05, 0.7, 0.1, 0.05]$，即 $S_{it}=0.7$，则 $L_i = -log(0.7) = 0.36$。可见，模型输出的概率和样本类别标签越接近，Loss 越小，说明模型越准确，这也是为什么使用交叉熵作为 Loss 的原因。&lt;/p&gt;
+
+&lt;p&gt;整个训练集的 Loss 为各个样本 Loss 的平均值，通常还会加上 L2 惩罚项，系数 $\frac{1}{2}$ 是为了求导消掉指数：&lt;/p&gt;
+
+\[L = \frac{1}{N} \sum\_{i=1}^{N} L\_i + \frac{\lambda}{2}\||W\||^2\]
+
+&lt;p&gt;我们一般称其为 Softmax Loss。&lt;/p&gt;
+
+&lt;h2 id=&quot;3-梯度计算&quot;&gt;3 梯度计算&lt;/h2&gt;
+
+&lt;p&gt;先回顾一下 Softmax 的流程：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-mermaid&quot;&gt;graph LR
+    A[Xi * W] --&amp;gt; Si --&amp;gt; Softmax运算 --&amp;gt; Pi --&amp;gt; B[Li=logPi]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;符号说明：&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;符号&lt;/th&gt;
+      &lt;th&gt;含义&lt;/th&gt;
+      &lt;th&gt;维度&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$X_i$&lt;/td&gt;
+      &lt;td&gt;一个输入样本向量&lt;/td&gt;
+      &lt;td&gt;1 x M&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$W$&lt;/td&gt;
+      &lt;td&gt;参数矩阵&lt;/td&gt;
+      &lt;td&gt;M x C&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$S_i$&lt;/td&gt;
+      &lt;td&gt;每个类别上的得分组成的向量&lt;/td&gt;
+      &lt;td&gt;1 x C&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$P_i$&lt;/td&gt;
+      &lt;td&gt;每个类别上的概率组成的向量&lt;/td&gt;
+      &lt;td&gt;1 x C&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$y_i$&lt;/td&gt;
+      &lt;td&gt;样本标签 one-hot 向量&lt;/td&gt;
+      &lt;td&gt;1 x C&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;其中 $M$ 是输入的特征数量，$C$ 是输出类别的数量。我们的目的，是要求 Loss 函数关于参数矩阵 $W$ 的偏导数，这个偏导数将用于在梯度下降算法中更新 $W$ 的值。根据链式法则有：&lt;/p&gt;
+
+\[\frac{\partial{L_i}}{\partial{W}}
+= \frac{\partial{L_i}}{\partial{Si}} \times \frac{\partial{S_i}}{\partial{W}}\]
+
+&lt;p&gt;第一项即 Softmax 的偏导数，第二项则是一个矩阵求导，下面分别介绍。&lt;/p&gt;
+
+&lt;h3 id=&quot;31-softmax-loss-导数&quot;&gt;3.1 Softmax Loss 导数&lt;/h3&gt;
+
+&lt;p&gt;首先来计算样本 $X_i$ 的 Loss 关于 $S_i$ 的梯度 $\frac{\partial{L_i}}{\partial{S_i}}$，这是求标量关于向量的偏导数。我们知道：&lt;/p&gt;
+
+\[L_i = -log(\frac{e^{S_{i,t}}}{\sum_{k}{e^{S_{i,k}}}})\]
+
+&lt;p&gt;其中类别 $t$ 是该样本的标签。把上式中的分式改写为减式：&lt;/p&gt;
+
+\[L_i = -\left[log(e^{S_{i,t}}） - log({\sum_{k}{e^{S_{i,k}}}})\right]\]
+
+&lt;p&gt;化简并展开求和符号：&lt;/p&gt;
+
+\[L_i = -S_{it} + log(e^{S_{i,0}} + e^{S_{i,0}} + ... + e^{S_{i,C-1}})\]
+
+&lt;p&gt;$log$ 函数求导很简单，如对分量 $e^{S_{ij}}$ 求偏导：&lt;/p&gt;
+
+\[\begin{align}
+\frac{\partial{log({\sum_{k}{e^{S_{i,k}}}})}}{\partial{e^{S_{i,j}}}}
+&amp;amp;= \frac{e^{S_{i,j}}}{e^{S_{i,0}} + e^{S_{i,0}} + ... + e^{S_{i,C-1}}} \\
+&amp;amp;= \frac{e^{S_{i,j}}}{\sum_{k}{e^{S_{i,k}}}} \\
+&amp;amp;= P_{i,j}
+\end{align}\]
+
+&lt;p&gt;所以后面那一项求导其实等于 Softmax 输出的概率值，那么标量 $L_i$ 对某个分量(标量) $S_{i,k}$ 的偏导数为：&lt;/p&gt;
+
+\[\frac{\partial{L_i}}{\partial{S_{i,k}}} =
+\begin{cases}
+    -1 + P_{i,k}, &amp;amp;\text{if $k = t$} \\
+    P_{i,k}, &amp;amp;\text{if $k \neq t$}
+\end{cases}\]
+
+&lt;p&gt;即该样本的 Loss 对标签对应的分量求偏导时会多减去一个 $-1$。所以，我们计算 Softmax 的 Loss 关于 $S_i$ 的导数的时候，直接使用概率向量 $P_i$ 减去标签向量 $y_i$ 即可：&lt;/p&gt;
+
+\[\frac{\partial{L_i}}{\partial{S_i}} = P_i - y_i\]
+
+&lt;p&gt;因此，对于有 N 个样本的训练集 $X$，其规模为 N x M，标签用 $y$ 表示，是一个由 one-hot 行向量组成的 N x C 的矩阵。我们可以一次性求出一个 Loss 关于 S 的偏导数矩阵（规模为 N x C ）：&lt;/p&gt;
+
+\[\begin{align}
+    \frac{\partial{L}}{\partial{S}} &amp;amp;= P - y \\
+    &amp;amp;=
+    \begin{bmatrix}
+    P_{0,0} &amp;amp; P_{0,1} &amp;amp; ... &amp;amp; P_{0,C-1} \\
+    ... &amp;amp; ... &amp;amp; ... &amp;amp; ... \\
+    P_{N-1,0} &amp;amp; P_{N-1,1} &amp;amp; ... &amp;amp; P_{N-1,C-1}
+    \end{bmatrix}
+    -
+    \begin{bmatrix}
+    y_{0,0} &amp;amp; y_{0,1} &amp;amp; ... &amp;amp; y_{0,C-1} \\
+    ... &amp;amp; ... &amp;amp; ... &amp;amp; ... \\
+    y_{N-1,0} &amp;amp; y_{N-1,1} &amp;amp; ... &amp;amp; y_{N-1,C-1}
+    \end{bmatrix}
+\end{align}\]
+
+&lt;p&gt;在编写代码时，我们可以直接按照上面这个式子批量求出所有的 Softmax Loss 偏导数。&lt;/p&gt;
+
+&lt;h3 id=&quot;32-矩阵导数&quot;&gt;3.2 矩阵导数&lt;/h3&gt;
+
+&lt;p&gt;我们已经完成了链式求导的第一部分，下面来计算第二部分，即 $\frac{\partial{S_i}}{\partial{W}}$。我们先从单个样本的得分 $S_i$ 开始，后面再推导出向量化的计算公式。我们知道 $S_i = X_iW$，即：&lt;/p&gt;
+
+\[[S_{i,0},S_{i,1},...,S_{i,C-1}] = [X_{i,0},X_{i,1},...,X_{i,M-1}]
+\begin{bmatrix}
+W_{0,0} &amp;amp; W_{0,1} &amp;amp; ... &amp;amp; W_{0,C-1} \\
+W_{1,0} &amp;amp; W_{1,1} &amp;amp; ... &amp;amp; W_{1,C-1} \\
+... &amp;amp; ... &amp;amp; ... &amp;amp; ... \\
+W_{M-1,0} &amp;amp; W_{M-1,1} &amp;amp; ... &amp;amp; W_{M-1,C-1} \\
+\end{bmatrix}\]
+
+&lt;p&gt;可见 $\frac{\partial{S_i}}{\partial{W}}$ 是向量对矩阵的偏导数，直接写出答案可能比较困难，我们可以先计算最简单的标量对标量的偏导数，最后把它们组合起来。例如求 $S_{i,0}$ 关于 $W_{0,0}$ 的偏导数，我们知道：&lt;/p&gt;
+
+\[S_{i,0} = X_{i,0}W_{0,0} + X_{i,1}W_{1,0} + ... + X_{i,M-1}W_{M-1,0}\]
+
+&lt;p&gt;可见 $S_i$ 的第 $k$ 个分量关于 $W$ 的偏导数只和 $W$ 的第 $k$  列有关，则 ：&lt;/p&gt;
+
+\[\frac{\partial{S_{i,0}}}{\partial{W_{0,0}}} = X_{i,0} \\
+\frac{\partial{S_{i,0}}}{\partial{W_{1,0}}} = X_{i,1} \\
+...\\
+\frac{\partial{S_{i,0}}}{\partial{W_{M-1,0}}} = X_{i,M-1}\]
+
+&lt;p&gt;那么：&lt;/p&gt;
+
+\[\frac{\partial{S_{i,0}}}{\partial{W_{j,0}}} = {X_i}^T, \space j\in[0,M-1]\]
+
+&lt;p&gt;同理，$S_{i,1},…,S_{i,C-1}$ 对 $W$ 的偏导数均为 ${X_i}^T$，那么可以得到：&lt;/p&gt;
+
+\[\frac{\partial{S_i}}{\partial{W}} = \left[{X_i}^T, ..., {X_i}^T\right]\]
+
+&lt;p&gt;共有 M 行 C 列。注意这只是一个样本的得分 $S_i$ 关于参数矩阵 $W$ 的偏导数。&lt;/p&gt;
+
+&lt;h3 id=&quot;33-反向传播&quot;&gt;3.3 反向传播&lt;/h3&gt;
+
+&lt;p&gt;反向传播的目标是求 $\frac{\partial{L}}{\partial{W}}$ ，然后用它对参数 $W$ 进行更新(梯度下降)。对于单个样本有：&lt;/p&gt;
+
+\[\begin{align}
+\frac{\partial{L_i}}{\partial{W}}
+&amp;amp;= \frac{\partial{L_i}}{\partial{Si}} \times \frac{\partial{S_i}}{\partial{W}} \\
+&amp;amp;= (P_i - y_i) \times \left[{X_i}^T, ..., {X_i}^T\right]
+\end{align}\]
+
+&lt;p&gt;$P_i - y_i$ 的大小为 1 x C，$\left[{X_i}^T, …, {X_i}^T\right]$ 的大小为 M x C，元素对应相乘并进行行扩展(row broadcasting)。对 Loss 函数求关于 $W$ 的偏导有：&lt;/p&gt;
+
+\[\frac{\partial{L}}{\partial{W}} =
+\frac{1}{N}\sum_{i=1}^{N}\frac{\partial{L_i}}{\partial{W}}
++ \lambda W\]
+
+&lt;p&gt;在反向传播过程中，求和项可以写为矩阵乘法的形式：&lt;/p&gt;
+
+\[\begin{align}
+\sum_{i=1}^{N}\frac{\partial{L_i}}{\partial{W}}
+&amp;amp;= X^T\frac{\partial{L}}{\partial{S}} \\
+&amp;amp;= X^T(P-y)
+\end{align}\]
+
+&lt;p&gt;如果比较难理解，可以将这个矩阵乘法展开（为了方便，下标从 1 开始），我们记 $D = P-y$（Softmax 传来的梯度矩阵）：&lt;/p&gt;
+
+\[\begin{align}
+\sum_{i=1}^{N}\frac{\partial{L_i}}{\partial{W}}
+&amp;amp;= X^TD \\
+&amp;amp;=
+\begin{bmatrix}
+X_{11} &amp;amp; X_{21} &amp;amp; ... &amp;amp; X_{N1} \\
+X_{12} &amp;amp; X_{22} &amp;amp; ... &amp;amp; X_{N2} \\
+... &amp;amp; ... &amp;amp; ... &amp;amp; ... \\
+X_{1M} &amp;amp; X_{2M} &amp;amp; ... &amp;amp; X_{NM} \\
+\end{bmatrix}
+\begin{bmatrix}
+D_{11} &amp;amp; D_{12} &amp;amp; ... &amp;amp; D_{1C} \\
+D_{21} &amp;amp; D_{22} &amp;amp; ... &amp;amp; D_{2C} \\
+... &amp;amp; ... &amp;amp; ... &amp;amp; ... \\
+D_{N1} &amp;amp; D_{N2} &amp;amp; ... &amp;amp; D_{NC} \\
+\end{bmatrix} \\
+&amp;amp;=
+\begin{bmatrix}
+dW_{11} &amp;amp; dW_{12} &amp;amp; ... &amp;amp; dW_{1C} \\
+dW_{21} &amp;amp; dW_{22} &amp;amp; ... &amp;amp; dW_{2C} \\
+... &amp;amp; ... &amp;amp; ... &amp;amp; ... \\
+dW_{M1} &amp;amp; dW_{M2} &amp;amp; ... &amp;amp; dW_{MC} \\
+\end{bmatrix}
+\end{align}\]
+
+&lt;p&gt;以 $dW_{11}$ 为例展开：&lt;/p&gt;
+
+\[dW_{11} = X_{11}D_{11} + X_{21}D_{21} + ... + X_{N1}D_{N1}\]
+
+&lt;p&gt;即 $dW_{11}$ 是每个样本的第一个分量和对应上游偏导数的乘积之和，即在每个样本上应用链式法则再求和。&lt;/p&gt;
+
+&lt;h2 id=&quot;4-示例代码&quot;&gt;4 示例代码&lt;/h2&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;softmax_loss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;W&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;X&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
+    Softmax loss function
+
+    Inputs have dimension D, there are C classes, and we operate on minibatches
+    of N examples.
+
+    Inputs:
+    - W: A numpy array of shape (D, C) containing weights.
+    - X: A numpy array of shape (N, D) containing a minibatch of data.
+    - y: A numpy array of shape (N,) containing training labels; y[i] = c means
+      that X[i] has label c, where 0 &amp;lt;= c &amp;lt; C.
+    - reg: (float) regularization strength
+
+    Returns a tuple of:
+    - loss as single float
+    - gradient with respect to weights W; an array of same shape as W
+    &quot;&quot;&quot;&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;# Initialize the loss and gradient to zero.
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;loss&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.0&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;dW&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zeros_like&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;W&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;# calculate Loss
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;X&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;X&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;W&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;axis&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;reshape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# aviod numeric instability
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;row_sum&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;axis&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;reshape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;row_sum&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;loss&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt;
+    
+    &lt;span class=&quot;c1&quot;&gt;# calculate dL/dW
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;labels&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zeros_like&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# store labels as one-hot vectors
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;labels&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ds&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;scores&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;labels&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# shape: DxC
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;dW&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;X&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# shape: DxN * NXC = D*C
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;dW&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;num_train&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;dW&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reg&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;W&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# regularization
+&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dW&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;5-参考文章&quot;&gt;5 参考文章&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cs231n.github.io/linear-classify/&quot;&gt;CS231n Convolutional Neural Networks for Visual Recognition&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/&quot;&gt;The Softmax function and its derivative&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://machinelearningmastery.com/cross-entropy-for-machine-learning/&quot;&gt;A Gentle Introduction to Cross-Entropy for Machine Learning&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</content><author><name>Tianxin Xie</name></author><category term="MachineLearning" /><category term="MachineLearning" /><summary type="html">Softmax 常用于多分类的情况，它将一个 N 维的由任意实数组成的向量作为输入，然后输出一个 N 维的概率向量，且其所有分量之和为 1。我们先来看一个有 5 类（类别编号为 0, 1, 2, 3, 4）输出的多分类器：</summary></entry></feed>
