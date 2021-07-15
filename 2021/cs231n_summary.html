@@ -7,22 +7,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>机器学习笔记 - 激活函数总结 | Tianxin’s Blog</title>
+<title>CS231n学习总结 | Tianxin’s Blog</title>
 <meta name="generator" content="Jekyll v4.2.0">
-<meta property="og:title" content="机器学习笔记 - 激活函数总结">
+<meta property="og:title" content="CS231n学习总结">
 <meta name="author" content="Tianxin Xie">
 <meta property="og:locale" content="en_US">
-<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
-<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
-<link rel="canonical" href="/2021/activations">
-<meta property="og:url" content="/2021/activations">
+<meta name="description" content="断断续续花了大约五周的时间学完了 CS231n，是时候总结一下自己遇到的问题和收获了。">
+<meta property="og:description" content="断断续续花了大约五周的时间学完了 CS231n，是时候总结一下自己遇到的问题和收获了。">
+<link rel="canonical" href="/2021/cs231n_summary">
+<meta property="og:url" content="/2021/cs231n_summary">
 <meta property="og:site_name" content="Tianxin’s Blog">
 <meta property="og:type" content="article">
-<meta property="article:published_time" content="2021-06-30T00:00:00+08:00">
+<meta property="article:published_time" content="2021-07-15T00:00:00+08:00">
 <meta name="twitter:card" content="summary">
-<meta property="twitter:title" content="机器学习笔记 - 激活函数总结">
+<meta property="twitter:title" content="CS231n学习总结">
 <script type="application/ld+json">
-{"description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"机器学习笔记 - 激活函数总结","dateModified":"2021-06-30T00:00:00+08:00","datePublished":"2021-06-30T00:00:00+08:00","url":"/2021/activations","author":{"@type":"Person","name":"Tianxin Xie"},"mainEntityOfPage":{"@type":"WebPage","@id":"/2021/activations"},"@type":"BlogPosting","@context":"https://schema.org"}</script>
+{"description":"断断续续花了大约五周的时间学完了 CS231n，是时候总结一下自己遇到的问题和收获了。","headline":"CS231n学习总结","dateModified":"2021-07-15T00:00:00+08:00","datePublished":"2021-07-15T00:00:00+08:00","url":"/2021/cs231n_summary","author":{"@type":"Person","name":"Tianxin Xie"},"mainEntityOfPage":{"@type":"WebPage","@id":"/2021/cs231n_summary"},"@type":"BlogPosting","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="shortcut icon" href="/assets/images/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
     display: none;
   }
 </style>
-<script>MathJax={"tex":{"inlineMath":[["$","$"],["\\(","\\)"]],"displayMath":[["$$","$$"],["\\[","\\]"]]},"svg":{"fontCache":"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 
@@ -754,11 +753,11 @@ function googleTranslateElementInit() {
 
 
 <header class="post-header">
-  <h1 class="post-title p-name" itemprop="name headline">机器学习笔记 - 激活函数总结</h1>
+  <h1 class="post-title p-name" itemprop="name headline">CS231n学习总结</h1>
   <h2 class="post-subtitle"></h2>
 
   <p class="post-meta">
-    <time class="dt-published" datetime="2021-06-30T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Jun 30, 2021
+    <time class="dt-published" datetime="2021-07-15T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Jul 15, 2021
     </time>
 
     
@@ -795,317 +794,190 @@ function googleTranslateElementInit() {
 
 
 
-    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 3 mins</span>
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 1 min</span>
   </p>
 <div class="post-tags"><a class="post-tag" href="/tags.html#MachineLearning">#MachineLearning</a></div></header>
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
     <div class="post-content e-content" itemprop="articleBody">
 
-      <p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/neuron.png" alt="neuron" style="zoom:80%;"></p>
+      <p>断断续续花了大约五周的时间学完了 CS231n，是时候总结一下自己遇到的问题和收获了。</p>
 
-<p>激活函数模拟了大脑中神经元的信号传递，上图是神经元图示，下图是机器学习中的数学模型（图片均来自<a href="%5BCS231n%20Convolutional%20Neural%20Networks%20for%20Visual%20Recognition%5D(https://cs231n.github.io/neural-networks-1/#quick)">CS231n</a>）。本文总结了大部分激活函数，包括他们数学表示、性质、优缺点、以及导数计算。</p>
+<h2 id="课程信息">课程信息</h2>
 
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/neuron_model.jpeg" alt="neural_model" style="zoom:80%;"></p>
+<p>课程主页：<a href="http://cs231n.stanford.edu/index.html">Stanford University CS231n: Convolutional Neural Networks for Visual Recognition</a></p>
 
-<h2 id="sigmoid">Sigmoid</h2>
+<p>CS231n 视频(2017年)：<a href="https://www.bilibili.com/video/BV1nJ411z7fe?share_source=copy_web">https://www.bilibili.com/video/BV1nJ411z7fe?share_source=copy_web</a></p>
 
-<p>曾经在网络中用得很多，现在不推荐在网络的中间层使用，可以作为输出层使用。</p>
+<p>推荐结合 <a href="https://web.eecs.umich.edu/~justincj/">Justin Johnson (umich.edu)</a> 的 <a href="https://web.eecs.umich.edu/~justincj/teaching/eecs498/FA2020/schedule.html">EECS 498-007 / 598-005: Deep Learning for Computer Vision (umich.edu)</a> 学习。（CS231n 的讲师 Justin Johnson 从斯坦福毕业之后去了密歇根州立大学任教，教学内容、PPT、实验作业等都和 CS231n 差不多，公开<a href="https://www.bilibili.com/video/BV1Yp4y1q7ms?from=search&seid=10520157556341037278">视频</a>是2019年的）</p>
 
-<p><strong>公式</strong>：</p>
-
-\[\delta(x) = \frac{1}{1+e^{-x}}\]
-
-<p><strong>导数</strong>：</p>
-
-\[\delta'(x) = \delta(x)(1-\delta(x))\]
-
-<p><strong>图像</strong>：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/sigmoid.png" alt="relu" style="zoom:25%;"></p>
-
-<p><strong>性质/作用</strong>：</p>
+<p>我是按照 2021 年 <a href="http://cs231n.stanford.edu/index.html">CS231n</a> 的 <a href="http://cs231n.stanford.edu/schedule.html">Schedule</a> 来学习的。虽然 CS231n 的课程内容以 lecture 划分，但是经过学习之后，我认为可以分为四大部分：</p>
 
 <ul>
-  <li>将输入规整到 $[0, 1]$ 的区间；</li>
-  <li>正好能“解释”符合神经元的“激发”（sigmoid 曾因此很受欢迎）。</li>
+  <li>Lecture 1~4：主要介绍分类问题、线性分类器、损失函数、优化方法、(全连接)神经网络、反向传播算法，这些属于深度学习基础中的基础，也是<strong>作业1</strong>的主要内容；</li>
+  <li>Lecture 5~9：主要介绍卷积神经网络(CNN)、深度学习中的硬件和软件、网络的训练和优化方法、比较著名的网络架构，这部分属于计算机视觉的必备知识，是<strong>作业2</strong>的主要内容；</li>
+  <li>Lecture 10~15：主要介绍循环神经网络(RNN)、LSTM、Attention机制、Transformer等，还有生成模型、自监督学习、网络可视化和理解、检测和分割，是<strong>作业3</strong>的主要内容；</li>
+  <li>Lecture 16~19：这部分是嘉宾Lecture，没有视频，只有slides。</li>
 </ul>
 
-<p><strong>缺点</strong>：</p>
+<p>另外 <a href="https://web.eecs.umich.edu/~justincj/teaching/eecs498/FA2020/schedule.html">EECS 498-007 / 598-005: Deep Learning for Computer Vision (umich.edu)</a> 还包括了3D视觉、视频分类、强化学习，生成模型部分也比CS231n更加详细。下面对各个部分的大致内容和阅读观看过的参考资料和视频做一个梳理，方便用到的时候再回顾。</p>
 
-<ol>
-  <li>
-    <p>从图像可以看出，远离坐标原点的输入会导致梯度消失；</p>
-  </li>
-  <li>
-    <p>sigmoid 的输出不是以 0 为中心的，而是全为非负数，会导致假设空间被缩小（维度越高越严重），很可能学不到最优参数；</p>
+<h2 id="lecture-14">Lecture 1~4</h2>
 
-    <p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/gradient_directions.png" style="zoom:40%;"></p>
-  </li>
-  <li>
-    <p>在实际应用时指数运算速度慢。</p>
-  </li>
-</ol>
+<p>Lecture 1和2从图像分类着手，介绍了图像分类问题的难点和流程(pipeline)，并使用介绍了<strong>最近领(Nearest Neighbor)</strong>算法，然后要求在作业中实现效果更好的<strong>KNN(K Nearest Neighbor)</strong>算法。</p>
 
-<p><strong>建议</strong>：</p>
+<blockquote>
+  <p>阅读材料：<a href="https://cs231n.github.io/classification/">https://cs231n.github.io/classification/</a></p>
+</blockquote>
+
+<p>Lecture 3以<strong>CIFAR10</strong>数据集为例，介绍了线性多分类器、Loss函数、多分类<strong>SVM</strong>、<strong>Softmax</strong>，最后对SVM和Softmax进行了对比。</p>
+
+<blockquote>
+  <p>阅读材料：<a href="https://cs231n.github.io/linear-classify/">https://cs231n.github.io/linear-classify/</a></p>
+</blockquote>
+
+<p>接着对求解最优参数的方法进行介绍，包括梯度下降、gradient check技巧、防止数值不稳定(除零或者数值过大)的技巧等。</p>
+
+<blockquote>
+  <p>阅读材料：<a href="https://cs231n.github.io/optimization-1/">https://cs231n.github.io/optimization-1/</a></p>
+</blockquote>
+
+<p>Lecture 4讲解了神经网络、反向传播，手推反向传播很重要的一个工具就是计算图。</p>
+
+<blockquote>
+  <p>阅读材料：<a href="https://cs231n.github.io/optimization-2/">https://cs231n.github.io/optimization-2/</a></p>
+</blockquote>
+
+<h2 id="lecture-59">Lecture 5~9</h2>
+
+<p>这部分主要围绕CNN展开，Lecture 5讲解了CNN基本知识：卷积、通道、核、池化(Pooling)等。</p>
+
+<blockquote>
+  <p>阅读材料：<a href="https://cs231n.github.io/convolutional-networks/">https://cs231n.github.io/convolutional-networks/</a></p>
+</blockquote>
+
+<p>Lecture 6主要介绍机器学习中的硬件(CPU, GPU, TPU)和软件(TensorFlow, PyTorch, Keras等)。</p>
+
+<p>Lecture 7和8主要讲解模型训练中的优化方法，如<strong>Batch Normalization</strong>等。这个部分我总结一个笔记：<a href="https://xietx1995.github.io/2021/optimization">https://xietx1995.github.io/2021/optimization</a>。</p>
+
+<p>Lecture 9主要介绍主流的网络架构：<a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf">AlexNet</a>, <a href="https://arxiv.org/abs/1409.1556">VGGNet</a>, <a href="https://arxiv.org/abs/1409.4842">GoogLeNet</a>, <a href="https://arxiv.org/abs/1512.03385">ResNet</a></p>
+
+<h2 id="lecture-1015">Lecture 10~15</h2>
+
+<p>Lecture 10和11主要讲解RNN、Attention、Transformer。</p>
+
+<blockquote>
+  <p>RNN阅读材料：<a href="https://www.deeplearningbook.org/contents/rnn.html">https://www.deeplearningbook.org/contents/rnn.html</a></p>
+</blockquote>
+
+<p>另外还有以下资料也很不错：</p>
 
 <ul>
-  <li>不推荐在网络中间层使用；</li>
-  <li>可作为输出层使用（如logistics regression）。</li>
-</ul>
-
-<h2 id="tanh">Tanh</h2>
-
-<p>tanh 函数和 sigmoid 有许多相似之处，但是比 sigmoid 好一点的是 tanh 的输出是以 0 为中心的。</p>
-
-<p><strong>公式</strong>：</p>
-
-\[tanh(x) = \frac{sinh(x)}{cosh(x)} = \frac{e^{x}-e^{-x}}{e^{x}+e^{-x}} = \frac{e^{2x}-1}{e^{2x}+1}\]
-
-<p><strong>导数</strong>：</p>
-
-\[tanh'(x) = 1 - tanh^2(x)\]
-
-<p><strong>图像</strong>：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/tanh.png" alt="relu" style="zoom:25%;"></p>
-
-<p><strong>性质/作用</strong>：</p>
-
-<ul>
-  <li>将输入规整到 $[-1, 1]$ 的区间；</li>
-  <li>以 0 为中心（<font color="green">Good</font>）。</li>
-</ul>
-
-<p><strong>缺点</strong>：</p>
-
-<ol>
-  <li>从图像可以看出，远离坐标原点的输入会导致梯度消失；</li>
-  <li>在实际应用时指数运算速度慢。</li>
-</ol>
-
-<p><strong>建议</strong>：</p>
-
-<ul>
-  <li>不推荐在网络中间层使用；</li>
-  <li>可作为输出层使用。</li>
-</ul>
-
-<h2 id="relu">ReLU</h2>
-
-<p>ReLU 的全称是 Rectified Linear Unit（线性修正单元），相较于 sigmoid 和 tanh 有诸多好处。</p>
-
-<p><strong>公式</strong>：</p>
-
-\[f(x) = max(0, x)\]
-
-<p><strong>导数</strong>：</p>
-
-\[f'(x) =
-\begin{cases}
-0, &amp; \text{if $x \le 0$} \\
-1, &amp; \text{if $x &gt; 0$}
-\end{cases}\]
-
-<p><strong>图像</strong>：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/relu.png" alt="relu" style="zoom:25%;"></p>
-
-<p><strong>性质/作用</strong>：</p>
-
-<ul>
-  <li>输入大于 0 时，不会出现梯度消失问题（<font color="green">Good</font>）；</li>
-  <li>计算效率高（<font color="green">Good</font>）；</li>
-  <li>收敛速度比 sigmoid / tanh 快得多（<font color="green">Good</font>）。</li>
-</ul>
-
-<p><strong>缺点</strong>：</p>
-
-<ol>
-  <li>不是以 0 为中心的，和 sigmoid 有同样的问题；</li>
-  <li>在输入小于 0 时会有梯度消失问题。</li>
-</ol>
-
-<p><strong>建议</strong>：</p>
-
-<ul>
-  <li>推荐使用。</li>
-</ul>
-
-<h2 id="leaky-relu">Leaky ReLU</h2>
-
-<p>Leaky ReLU 是 ReLU 的改进，主要是为了解决输入小于 0 时的梯度消失问题。</p>
-
-<p><strong>公式</strong>：</p>
-
-\[f(x) = max(\alpha x, x)\]
-
-<p>$\alpha$ 是一个超参数，通常取 0.1。</p>
-
-<p><strong>导数</strong>：</p>
-
-\[f'(x) =
-\begin{cases}
-\alpha, &amp; \text{if $x \le 0$} \\
-1, &amp; \text{if $x &gt; 0$}
-\end{cases}\]
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/leaky_relu.png" alt="relu" style="zoom:30%;"></p>
-
-<p><strong>性质/作用</strong>：</p>
-
-<ul>
-  <li>不会出现梯度消失问题（<font color="green">Good</font>）；</li>
-  <li>计算效率高（<font color="green">Good</font>）；</li>
-  <li>收敛速度比 sigmoid / tanh 快得多（<font color="green">Good</font>）；</li>
-</ul>
-
-<p><strong>变种</strong>：</p>
-
-<ul>
-  <li>将 $\alpha$ 设置为可学习的参数（而不是手动设定），称为PReLU。</li>
-</ul>
-
-<p><strong>建议</strong>：</p>
-
-<ul>
-  <li>推荐使用。</li>
-</ul>
-
-<h2 id="其他激活函数">其他激活函数</h2>
-
-<p>这里主要列出了另外 3 个不常用的激活函数：</p>
-
-<ul>
-  <li>Exponential Linear Unit (ELU)</li>
-  <li>Scaled Exponential Linear Unit (SELU)</li>
-  <li>Gaussian Error Linear Unit (GELU)</li>
-</ul>
-
-<h3 id="elu">ELU</h3>
-
-<p><strong>公式</strong>：</p>
-
-\[f(x) =
-\begin{cases}
-x, &amp; \text{if $x &gt; 0$} \\
-\alpha(e^x-1), &amp; \text{if $x \le 0$}
-\end{cases}\]
-
-<p>$ \alpha $ 是超参数，默认取 1。</p>
-
-<p><strong>图像</strong>：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/elu.png" alt="elu" style="zoom:25%;"></p>
-
-<p><strong>性质/作用</strong>：</p>
-
-<ul>
-  <li>具有 ReLU 的所有优点；</li>
-  <li>平均值更加靠近 0；</li>
-  <li>输入值为负数时较 Leaky ReLU 更加鲁棒。</li>
-</ul>
-
-<p><strong>缺点</strong>：</p>
-
-<ul>
-  <li>计算量大</li>
-</ul>
-
-<h3 id="selu">SELU</h3>
-
-<p><strong>公式</strong>：</p>
-
-\[selu(x) =
-\begin{cases}
-\lambda x, &amp; \text{if $x &gt; 0$} \\
-\lambda\alpha(e^x-1), &amp; \text{if $x \le 0$}
-\end{cases}\]
-
-<p>论文”Klambauer et al, Self-Normalizing Neural Networks, ICLR 2017“给出了最佳取值：</p>
-
-<p>$\alpha = 1.6732632423543772848170429916717$</p>
-
-<p>$\lambda = 1.0507009873554804934193349852946$</p>
-
-<p><strong>图像</strong>：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/selu.png" alt="selu" style="zoom:50%;"></p>
-
-<p><strong>性质/作用</strong>：</p>
-
-<ul>
-  <li>ELU 的 Scaled 版本，对于很深的网络效果较好；</li>
-  <li>具有”Self-Normalizing“效果，训练很深的网络时无需 batch normalization。</li>
-</ul>
-
-<p><strong>缺点</strong>：</p>
-
-<ul>
-  <li>计算量大</li>
-</ul>
-
-<h3 id="gelu">GELU</h3>
-
-<p>GELU 较为复杂，主要有以下特点（Copy 自 EECS 498-007 Slides）：</p>
-
-<ul>
-  <li>Idea: Multiply input by 0 or 1  at random; large values more  likely to be multiplied by 1,  small values more likely to be  multiplied by 0 (data-dependent dropout)</li>
-  <li>Take expectation over  randomness</li>
-  <li>Very common in Transformers (BERT, GPT, GPT-2, GPT-3)</li>
-</ul>
-
-<p><strong>公式</strong>：</p>
-
-\[\begin{align}
-gelu(x) &amp;= xP(X \le x) \\
-&amp;= \frac{x}{2}(1+erf(x/\sqrt{2})) \\
-&amp;\approx x\delta(1.702x)
-\end{align}\]
-
-<p>其中随机变量 $X \thicksim N(0,1)$。</p>
-
-<p><strong>图像</strong>：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/gelu.png" alt="gelu" style="zoom:25%;"></p>
-
-<p>具体细节可以阅读论文：<a href="https://arxiv.org/pdf/1606.08415v3.pdf">https://arxiv.org/pdf/1606.08415v3.pdf</a></p>
-
-<h2 id="各种激活函数对比">各种激活函数对比</h2>
-
-<p>下面是在 CIFAR-10 上各种激活函数的表现（图像来自论文 <a href="https://arxiv.org/abs/1710.05941">https://arxiv.org/abs/1710.05941</a>）：</p>
-
-<p><img src="/assets/images/post_imgs/MLNotes_Activations.assets/accuracy_of_activations.png" alt="activations performance"></p>
-
-<p>总的来说，不想折腾的话，用 ReLU 就行了，别用 sigmoid 和 tanh。</p>
-
-<h2 id="参考文章">参考文章</h2>
-
-<ol>
-  <li><a href="https://cs231n.github.io/neural-networks-1/">CS231n Convolutional Neural Networks for Visual Recognition</a></li>
-  <li><a href="https://web.eecs.umich.edu/~justincj/slides/eecs498/FA2020/598_FA2020_lecture10.pdf">598_FA2020_lecture10.pdf (umich.edu)</a></li>
-  <li><a href="https://machinelearningmastery.com/rectified-linear-activation-function-for-deep-learning-neural-networks/">A Gentle Introduction to the Rectified Linear Unit (ReLU)</a></li>
-  <li><a href="https://www.math24.net/derivatives-hyperbolic-functions">Derivatives of Hyperbolic Functions</a></li>
-  <li><a href="https://medium.com/@shoray.goel/gelu-gaussian-error-linear-unit-4ec59fb2e47c">GELU activation</a></li>
-  <li>GELU paper- <a href="https://arxiv.org/pdf/1606.08415v3.pdf">https://arxiv.org/pdf/1606.08415v3.pdf</a>
+  <li><a href="https://medium.com/swlh/a-simple-overview-of-rnn-lstm-and-attention-mechanism-9e844763d07b">A simple overview of RNN, LSTM and Attention Mechanism</a></li>
+  <li><a href="https://towardsdatascience.com/illustrated-guide-to-lstms-and-gru-s-a-step-by-step-explanation-44e9eb85bf21">Illustrated Guide to LSTM’s and GRU’s: A step by step explanation</a></li>
+  <li>Attention原始论文：<a href="https://arxiv.org/abs/1409.0473">https://arxiv.org/abs/1409.0473</a>
 </li>
-  <li><a href="https://arxiv.org/abs/1710.05941">https://arxiv.org/abs/1710.05941</a></li>
-</ol>
+  <li>Self-Attention原始论文：<a href="https://arxiv.org/abs/1601.06733">https://arxiv.org/abs/1601.06733</a>
+</li>
+  <li><a href="https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html">Attention? Attention! (lilianweng.github.io)</a></li>
+  <li>Attention视频讲解：<a href="https://youtu.be/XhWdv7ghmQQ">https://youtu.be/XhWdv7ghmQQ</a>
+</li>
+  <li>Selft-Attention视频讲解：<a href="https://youtu.be/Vr4UNt7X6Gw">https://youtu.be/Vr4UNt7X6Gw</a>
+</li>
+  <li>Transformer原始论文：<a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>
+</li>
+  <li>Transformer视频讲解：<a href="https://youtu.be/aButdUV0dxI">https://youtu.be/aButdUV0dxI</a>
+</li>
+  <li><a href="http://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer – Jay Alammar</a></li>
+  <li><a href="http://peterbloem.nl/blog/transformers">Transformers from scratch</a></li>
+</ul>
+
+<p>Lecture 12和13分别是生成模型、自监督学习，李宏毅的视频讲得很好：</p>
+
+<ul>
+  <li>生成式对抗网络：<a href="https://youtu.be/4OWp0wDu6Xw">https://youtu.be/4OWp0wDu6Xw</a>
+</li>
+  <li>自监督学习：<a href="https://youtu.be/e422eloJ0W4">https://youtu.be/e422eloJ0W4</a>
+</li>
+</ul>
+
+<p>其他不错的资料：</p>
+
+<ul>
+  <li><a href="https://machinelearningmastery.com/what-are-generative-adversarial-networks-gans/">A Gentle Introduction to Generative Adversarial Networks (GANs)</a></li>
+  <li><a href="https://lilianweng.github.io/lil-log/2019/11/10/self-supervised-learning.html">Self-Supervised Representation Learning (Lilian Weng Blog Post)</a></li>
+</ul>
+
+<p>Lecture 14主要讲特征可视化，如Saliency Maps等，Lecture 15主要讲目标检测、图像分割等。</p>
+
+<h2 id="lecture-1619">Lecture 16~19</h2>
+
+<p>这部分是嘉宾Lecture，无视频，部分无Slides。</p>
+
+<h2 id="作业难点">作业难点</h2>
+
+<p>CS231n的作业比较硬核，大部分必须手写梯度计算和反向传播，其中还有很多技巧和细节。通过这种折磨之后，结合阅读框架部分源码，自己也大概了解了框架内部具体是怎么做的。下面总结一下作业中的难点。</p>
+
+<h3 id="assignment-1">Assignment 1</h3>
+
+<p>个人认为作业1中比较难的有三个，主要是需要手动计算梯度：</p>
+
+<ul>
+  <li>Q2: Training a Support Vector Machine</li>
+  <li>Q3: Implement a Softmax classifier</li>
+  <li>Q4: Two-Layer Neural Network</li>
+</ul>
+
+<p>Q2和Q3需要推导梯度计算公式，向量化版本需要思考。关于Softmax的梯度计算，我总结了一篇文章：<a href="https://xietx1995.github.io/2021/softmax">https://xietx1995.github.io/2021/softmax</a></p>
+
+<p>全连接的反向传播就是矩阵求导，和上游梯度相乘即可。</p>
+
+<h3 id="assignment-2">Assignment 2</h3>
+
+<p>作业2中比较难的是Batch Normalization和CNN的反向传播：</p>
+
+<ul>
+  <li>Q2: Batch Normalization</li>
+  <li>Q4: Convolutional Neural Networks</li>
+</ul>
+
+<p>以Batch Normalization为例，只要推出的梯度计算公式，写代码就清晰明了：</p>
+
+<p><img src="/assets/images/post_imgs/CS231n_Summary/bn_computation_graph.jpg" alt="bn_computation_graph"></p>
+
+<p>CNN的反向传播需要一点想象力。推荐阅读文章：<a href="https://medium.com/@pavisj/convolutions-and-backpropagations-46026a8f5d2c">Convolutions and Backpropagations</a></p>
+
+<h3 id="assignment-3">Assignment 3</h3>
+
+<p>作业3中比较难的是RNN和Transformer的梯度计算：</p>
+
+<ul>
+  <li>Q1: Image Captioning with Vanilla RNNs</li>
+  <li>Q2: Image Captioning with Transformers</li>
+</ul>
+
+<p>RNN中比较难的是梯度在时间步之间的积累，Transformer中比较难的是理解Q、K、V矩阵的反向传播。</p>
+
+<p>总之，利用计算图，就可以很方便地推导出梯度计算公式，写出代码就比较顺理成章了，但是如果要写出向量化的代码还是比较难的，这需要对numpy、矩阵计算有更进一步的掌握才行。</p>
+
+<hr>
+
+<p>总之，CS231n还只是起步，想要研究各个细分的方向需要更进一步的学习才能进步。</p>
 
 
     </div>
 
 </article>
 <div class="post-nav">
-<a class="previous" href="/2021/softmax" title="机器学习笔记 - Softmax">机器学习笔记 - Softmax</a><a class="next" href="/2021/optimization" title="机器学习笔记 - 梯度下降优化方法总结">机器学习笔记 - 梯度下降优化方法总结</a>
+<a class="previous" href="/2021/optimization" title="机器学习笔记 - 梯度下降优化方法总结">机器学习笔记 - 梯度下降优化方法总结</a><span></span>
 </div>
 <div class="post-related">
       <div>Related Articles</div>
       <ul>
-        <li><a class="post-link" href="/2021/cs231n_summary" title="机器学习笔记 - 梯度下降优化方法总结">CS231n学习总结</a></li>
-<li><a class="post-link" href="/2021/activations" title="机器学习笔记 - 梯度下降优化方法总结">机器学习笔记 - 激活函数总结</a></li>
-<li><a class="post-link" href="/2021/softmax" title="机器学习笔记 - 梯度下降优化方法总结">机器学习笔记 - Softmax</a></li>
-<li><a class="post-link" href="/2021/optimization" title="机器学习笔记 - 梯度下降优化方法总结">机器学习笔记 - 梯度下降优化方法总结</a></li>
+        <li><a class="post-link" href="/2021/cs231n_summary" title="">CS231n学习总结</a></li>
+<li><a class="post-link" href="/2021/softmax" title="">机器学习笔记 - Softmax</a></li>
+<li><a class="post-link" href="/2021/optimization" title="">机器学习笔记 - 梯度下降优化方法总结</a></li>
+<li><a class="post-link" href="/2021/activations" title="">机器学习笔记 - 激活函数总结</a></li>
 </ul>
     </div>
 <div class="post-comments"></div></section>
