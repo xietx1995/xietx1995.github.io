@@ -1,4 +1,50 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://xietx1995.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://xietx1995.github.io/" rel="alternate" type="text/html" /><updated>2021-07-25T18:33:22+08:00</updated><id>https://xietx1995.github.io/feed.xml</id><title type="html">Tianxin’s Blog</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>Tianxin Xie</name></author><entry><title type="html">AI框架开发日记01 - Idea和小目标</title><link href="https://xietx1995.github.io/dev/ai_framework_log01" rel="alternate" type="text/html" title="AI框架开发日记01 - Idea和小目标" /><published>2021-07-25T00:00:00+08:00</published><updated>2021-07-25T00:00:00+08:00</updated><id>https://xietx1995.github.io/dev/framework_dev_log</id><content type="html" xml:base="https://xietx1995.github.io/dev/ai_framework_log01">&lt;h2 id=&quot;idea&quot;&gt;Idea&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://xietx1995.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://xietx1995.github.io/" rel="alternate" type="text/html" /><updated>2021-08-21T18:42:03+08:00</updated><id>https://xietx1995.github.io/feed.xml</id><title type="html">Tianxin’s Blog</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>Tianxin Xie</name></author><entry><title type="html">阅读列表</title><link href="https://xietx1995.github.io/fun/reading" rel="alternate" type="text/html" title="阅读列表" /><published>2021-08-21T00:00:00+08:00</published><updated>2021-08-21T00:00:00+08:00</updated><id>https://xietx1995.github.io/fun/book_reading</id><content type="html" xml:base="https://xietx1995.github.io/fun/reading">&lt;blockquote&gt;
+  &lt;p&gt;读书破万卷，下笔如有神。 —— 杜甫《奉赠韦左丞丈二十二韵》&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;1-语言&quot;&gt;1 语言&lt;/h2&gt;
+
+&lt;p&gt;这部分总结了关于各种编程语言的优秀书籍。&lt;/p&gt;
+
+&lt;h3 id=&quot;python&quot;&gt;Python&lt;/h3&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;书名&lt;/th&gt;
+      &lt;th&gt;简介&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[流畅的Python](https://book.douban.com/subject/27028517/)&lt;/td&gt;
+      &lt;td&gt;Python进阶必读优秀书籍之一！但需要一定的基础知识。&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;2-系统开发&quot;&gt;2 系统开发&lt;/h2&gt;
+
+&lt;p&gt;由于Linux/Unix开发和C、C++息息相关，并且涉及编译、操作系统等知识，所以相关的内容都列在此处。&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;书名&lt;/th&gt;
+      &lt;th&gt;简介&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[程序员的自我修养：链接、装载与库](https://book.douban.com/subject/3652388/)&lt;/td&gt;
+      &lt;td&gt;从系统的层面讲解了程序的运行机理，值得一读！&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[Unix/Linux编程实践教程](https://book.douban.com/subject/1219329/)&lt;/td&gt;
+      &lt;td&gt;书中示意图简洁明了，有很多有趣的例程，很适合Linux/Unix编程新手。&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;</content><author><name>Tianxin Xie</name></author><category term="Reading" /><category term="reading" /><summary type="html">读书破万卷，下笔如有神。 —— 杜甫《奉赠韦左丞丈二十二韵》</summary></entry><entry><title type="html">AI框架开发日记01 - Idea和小目标</title><link href="https://xietx1995.github.io/dev/ai_framework_log01" rel="alternate" type="text/html" title="AI框架开发日记01 - Idea和小目标" /><published>2021-07-25T00:00:00+08:00</published><updated>2021-07-25T00:00:00+08:00</updated><id>https://xietx1995.github.io/dev/framework_dev_log</id><content type="html" xml:base="https://xietx1995.github.io/dev/ai_framework_log01">&lt;h2 id=&quot;idea&quot;&gt;Idea&lt;/h2&gt;
 
 &lt;p&gt;在读本科的时候接触到了&lt;a href=&quot;https://pjreddie.com/darknet/yolo/&quot;&gt;YOLO&lt;/a&gt;算法，以及YOLO作者&lt;a href=&quot;https://pjreddie.com&quot;&gt;Joseph Redmon&lt;/a&gt;用纯C语言和CUDA开发的神经网络框架&lt;a href=&quot;https://pjreddie.com/darknet/&quot;&gt;DarkNet&lt;/a&gt;。当时的我水平有限，只能下载源码编译安装，让后用它做了一个毕业设计。但一直想探究DarkNet的源码，后来由于工作，迟迟没有动手。如今又回到了校园，有了周末的空档，编程能力和理论知识也有所提升，我想何不把自己想做的事情做了，即从零开始构建一个神经网络框架。&lt;/p&gt;
 
@@ -20,7 +66,7 @@
 
 &lt;h2 id=&quot;darknet源码分析&quot;&gt;DarkNet源码分析&lt;/h2&gt;
 
-&lt;p&gt;TODO…&lt;/p&gt;</content><author><name>Tianxin Xie</name></author><category term="Coding" /><category term="ai" /><category term="framework" /><summary type="html">Idea</summary></entry><entry><title type="html">My Tool Box</title><link href="https://xietx1995.github.io/tools" rel="alternate" type="text/html" title="My Tool Box" /><published>2021-07-21T00:00:00+08:00</published><updated>2021-07-21T00:00:00+08:00</updated><id>https://xietx1995.github.io/ToolBox</id><content type="html" xml:base="https://xietx1995.github.io/tools">&lt;table&gt;
+&lt;p&gt;TODO…&lt;/p&gt;</content><author><name>Tianxin Xie</name></author><category term="Coding" /><category term="ai" /><category term="framework" /><summary type="html">Idea</summary></entry><entry><title type="html">My Tool Box</title><link href="https://xietx1995.github.io/fun/tools" rel="alternate" type="text/html" title="My Tool Box" /><published>2021-07-21T00:00:00+08:00</published><updated>2021-07-21T00:00:00+08:00</updated><id>https://xietx1995.github.io/fun/ToolBox</id><content type="html" xml:base="https://xietx1995.github.io/fun/tools">&lt;table&gt;
   &lt;tbody&gt;
     &lt;tr&gt;
       &lt;td&gt;Name&lt;/td&gt;
